@@ -19,25 +19,30 @@ of the stages of shuffle and reduce.
     - Map() is called for each line of the JSONL
     - The output is externally sorted by the new key (if changed)
 
-  - Output is written to:
-     - `map-filein-fileout-SSSS-of-NNNN.subshard-SSSS-of-NNNN.jsonl.gz`, e.g.
+  - Output is written (according to shard function) to:
+     - `map-filein-fileout-SSSS-of-NNNN.inputshard-SSSS-of-NNNN.jsonl.gz`, e.g.
 
-     - `map-filein-fileout-0001-of-0004.subshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0001-of-0004.subshard-0001-of-0004.jsonl.gz`, ...
-     - `map-filein-fileout-0001-of-0004.subshard-0003-of-0004.jsonl.gz`
+     - `map-filein-fileout-0001-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+     - `map-filein-fileout-0001-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...
+     - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`
      - ,
 
-     - `map-filein-fileout-0001-of-0004.subshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0001-of-0004.subshard-0001-of-0004.jsonl.gz`, ...
-     - `map-filein-fileout-0001-of-0004.subshard-0003-of-0004.jsonl.gz`,
+     - `map-filein-fileout-0001-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+     - `map-filein-fileout-0001-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...
+     - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`,
 
      - ...,
 
-     - `map-filein-fileout-0003-of-0004.subshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0003-of-0004.subshard-0001-of-0004.jsonl.gz`, ...
-     - `map-filein-fileout-0003-of-0004.subshard-0003-of-0004.jsonl.gz`
+     - `map-filein-fileout-0003-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+     - `map-filein-fileout-0003-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...
+     - `map-filein-fileout-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
 
   - The number of output files is equal to InputShards * OutputShards
+  - Each input shard makes one contribution (one file) to each) output shard, e.g.
+    - Processing `filein-0003-of-0004.jsonl.gz` produces:
+    - `map-filein-fileout-0000-of-0004.inputshard-0003-of-0004.jsonl.gz`,
+    - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`, ...
+    - `map-filein-fileout-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
 
 ## Shuffle step:
 
