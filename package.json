@@ -1,0 +1,62 @@
+{
+  "name": "@wholebuzz/mapreduce",
+  "version": "0.0.1",
+  "description": "Communicat-free MapReduce",
+  "keywords": [
+    "mapreduce"
+  ],
+  "author": "wholebuzz",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wholebuzz/mapreduce.git"
+  },
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "prepublishOnly": "yarn build",
+    "build": "tsc -b .",
+    "clean": "tsc -b . --clean",
+    "start": "node dist/cli.js",
+    "docs": "typedoc --disableOutputCheck && rm -rf docs/README.md && ./scripts/updateReadmeApiReference.sh",
+    "test": "jest --runInBand --ci --passWithNoTests --detectOpenHandles --forceExit",
+    "test:coverage": "jest --runInBand --ci --passWithNoTests --coverage --no-cache",
+    "badge:coverage": "istanbul-cobertura-badger -v -b coverage",
+    "lint": "tslint -c tslint.json --project .",
+    "lint:file": "tslint -c tslint.json",
+    "fix": "yarn lint --fix",
+    "format": "yarn run prettier --config .prettierrc.js --write 'src/*.+(ts)' dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "bin": "dist/cli.js",
+  "files": [
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "dbcp": "^1.2.29",
+    "yargs": "^17.2.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.22",
+    "@types/node": "^13.13.5",
+    "istanbul-cobertura-badger": "^1.3.1",
+    "jest": "^26.6.3",
+    "prettier": "^2.3.2",
+    "ts-jest": "^26.5.4",
+    "tslint": "^5.20.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "typedoc": "^0.20.35",
+    "typedoc-plugin-markdown": "3.8.2",
+    "typescript": "4.2.4",
+    "typescript-tslint-plugin": "^1.0.1"
+  },
+  "nyc": {
+    "reporter": [
+      "cobertura",
+      "json",
+      "lcov",
+      "text"
+    ]
+  }
+}

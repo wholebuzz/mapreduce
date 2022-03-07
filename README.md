@@ -1,4 +1,6 @@
-# Communication-free MapReduce
+# @wholebuzz/mapreduce [![image](https://img.shields.io/npm/v/@wholebuzz/mapreduce)](https://www.npmjs.com/package/@wholebuzz/mapreduce) [![test](https://github.com/wholebuzz/mapreduce/actions/workflows/test.yaml/badge.svg)](https://github.com/wholebuzz/mapreduce/actions/workflows/test.yaml)
+
+## Communication-free MapReduce
 
 Instead of starting a Master which starts simultaneous Mappers and Reducers on a cluster, let's decouple Mappers' 
 dependency on Reducers by using cloud storage as intermediary. We can run a large MapReduce job with a single-thread
