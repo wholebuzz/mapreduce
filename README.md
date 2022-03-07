@@ -1,9 +1,9 @@
 # Communication-free MapReduce
 
-Instead of starting a master which starts simultaneous mappers and reducers on a cluster, let's decouple mappers' 
-dependency on reducers by using cloud storage as intermediary. We can run a large MapReduce job with a single-thread
-and zero communication. Or we can run the usual many parallel mappers, synchronizing only (via file IPC) the completion
-of the stages of shuffle and reduce.
+Instead of starting a Master which starts simultaneous Mappers and Reducers on a cluster, let's decouple Mappers' 
+dependency on Reducers by using cloud storage as intermediary. We can run a large MapReduce job with a single-thread
+and zero communication. Or we can run the usual many parallel Mappers, synchronizing only (via file IPC) the completion
+of the stages of Shuffle and Reduce.
 
 ## Top-level:
   - API: MapReduce(filein, fileout, mapperClass, reducerClass, combinerClass)
@@ -22,26 +22,26 @@ of the stages of shuffle and reduce.
   - Output is written (according to shard function) to:
      - `map-filein-fileout-SSSS-of-NNNN.inputshard-SSSS-of-NNNN.jsonl.gz`, e.g.
 
-     - `map-filein-fileout-0001-of-0004.inputshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0001-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...
-     - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`
+     - `map-filein-fileout-0000-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+     - `map-filein-fileout-0000-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
+     - `map-filein-fileout-0000-of-0004.inputshard-0003-of-0004.jsonl.gz`
      - ,
 
      - `map-filein-fileout-0001-of-0004.inputshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0001-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...
+     - `map-filein-fileout-0001-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
      - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`,
 
      - ...,
 
      - `map-filein-fileout-0003-of-0004.inputshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0003-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...
+     - `map-filein-fileout-0003-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
      - `map-filein-fileout-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
 
   - The number of output files is equal to InputShards * OutputShards
-  - Each input shard makes one contribution (one file) to each) output shard, e.g.
+  - Each input shard makes one contribution (one file) to each output shard, e.g.
     - Processing `filein-0003-of-0004.jsonl.gz` produces:
     - `map-filein-fileout-0000-of-0004.inputshard-0003-of-0004.jsonl.gz`,
-    - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`, ...
+    - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`, ...,
     - `map-filein-fileout-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
 
 ## Shuffle step:
@@ -52,10 +52,14 @@ of the stages of shuffle and reduce.
 ## Reducer step:
 
   - For each output shard:
-    - Streaming K-way merge sort on `map-filein-fileout-SSSS-of-NNNN.subshard-*-of-0004.jsonl.gz`
+    - Streaming K-way merge sort on `map-filein-fileout-SSSS-of-NNNN.subshard-*-of-0004.jsonl.gz`, e.g. merge
+      - `map-filein-fileout-0002-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+      - `map-filein-fileout-0002-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
+      - `map-filein-fileout-0002-of-0004.inputshard-0003-of-0004.jsonl.gz`
+      - To produce `fileout-0002-of-0004.jsonl.gz`
     - Calls Reduce() for each Key and Value set
 
-  - Output is written to: `fileout-SSSS-of-NNNN.jsonl.gz`
+  - Output is written to: `fileout-SSSS-of-NNNN.jsonl.gz` for each shard,
     e.g. `fileout-0000-of-0004.jsonl.gz`, `fileout-0001-of-0004.jsonl.gz`, ..., `fileout-0003-of-0004.jsonl.gz`
 
 ## Cleanup:
