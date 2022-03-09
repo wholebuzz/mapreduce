@@ -23,29 +23,29 @@ of the stages of Shuffle and Reduce.
     - The outputs are externally sorted by the new key (if changed)
 
   - Output is written (according to shard function) to:
-     - `map-filein-fileout-SSSS-of-NNNN.inputshard-SSSS-of-NNNN.jsonl.gz`, e.g.
+     - `shuffle-SSSS-of-NNNN.inputshard-SSSS-of-NNNN.jsonl.gz`, e.g.
 
-     - `map-filein-fileout-0000-of-0004.inputshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0000-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
-     - `map-filein-fileout-0000-of-0004.inputshard-0003-of-0004.jsonl.gz`
+     - `shuffle-0000-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+     - `shuffle-0000-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
+     - `shuffle-0000-of-0004.inputshard-0003-of-0004.jsonl.gz`
      - ,
 
-     - `map-filein-fileout-0001-of-0004.inputshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0001-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
-     - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`,
+     - `shuffle-0001-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+     - `shuffle-0001-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
+     - `shuffle-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`,
 
      - ...,
 
-     - `map-filein-fileout-0003-of-0004.inputshard-0000-of-0004.jsonl.gz`,
-     - `map-filein-fileout-0003-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
-     - `map-filein-fileout-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
+     - `shuffle-0003-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+     - `shuffle-0003-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
+     - `shuffle-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
 
   - The number of output files is equal to InputShards * OutputShards
   - Each input shard makes one contribution (one file) to each output shard, e.g.
     - Processing `filein-0003-of-0004.jsonl.gz` produces:
-    - `map-filein-fileout-0000-of-0004.inputshard-0003-of-0004.jsonl.gz`,
-    - `map-filein-fileout-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`, ...,
-    - `map-filein-fileout-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
+    - `shuffle-0000-of-0004.inputshard-0003-of-0004.jsonl.gz`,
+    - `shuffle-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`, ...,
+    - `shuffle-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
 
 ## Shuffle step:
 
@@ -55,10 +55,10 @@ of the stages of Shuffle and Reduce.
 ## Reducer step:
 
   - For each output shard:
-    - Streaming K-way merge sort on `map-filein-fileout-SSSS-of-NNNN.inputshard-*-of-0004.jsonl.gz`, e.g. merge
-      - `map-filein-fileout-0002-of-0004.inputshard-0000-of-0004.jsonl.gz`,
-      - `map-filein-fileout-0002-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
-      - `map-filein-fileout-0002-of-0004.inputshard-0003-of-0004.jsonl.gz`
+    - Streaming K-way merge sort on `shuffle-SSSS-of-NNNN.inputshard-*-of-0004.jsonl.gz`, e.g. merge
+      - `shuffle-0002-of-0004.inputshard-0000-of-0004.jsonl.gz`,
+      - `shuffle-0002-of-0004.inputshard-0001-of-0004.jsonl.gz`, ...,
+      - `shuffle-0002-of-0004.inputshard-0003-of-0004.jsonl.gz`
       - To produce `fileout-0002-of-0004.jsonl.gz`
     - Calls Reduce() for each Key and Value set
 
@@ -67,7 +67,7 @@ of the stages of Shuffle and Reduce.
 
 ## Cleanup:
 
-  - The map-filein-fileout files can be removed
+  - The shuffle files can be removed
 
 ## References:
 
