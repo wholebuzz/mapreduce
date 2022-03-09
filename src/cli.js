@@ -25,34 +25,22 @@ process.on('uncaughtException', (err) => console.error('unhandled exception', er
 async function main() {
   const formats = Object.values(DatabaseCopyFormat)
   const args = yargs.strict().options({
-    orderBy: {
-      description: 'Database query ORDER BY',
-      type: 'array',
-    },
-    shardBy: {
-      description: 'Shard (or split) the data based on key',
-      type: 'string',
-    },
-    sourceFile: {
+    inputPaths: {
       description: 'Source file',
-      type: 'string',
+      type: 'array',
       required: true,
     },
-    sourceFormat: {
+    inputFormat: {
       choices: formats,
     },
-    sourceShards: {
-      description: 'Source shards',
-      type: 'number',
-    },
-    targetFile: {
+    outputPath: {
       description: 'Target file',
       type: 'string',
     },
-    targetFormat: {
+    outputFormat: {
       choices: formats,
     },
-    targetShards: {
+    outputShards: {
       description: 'Target shards',
       type: 'number',
     },
@@ -68,12 +56,18 @@ async function main() {
   ])
 
   const options = {
-    fileSystem,
-    input: { filename: args.sourceFile },
-    output: { filename: args.targetFile, targetShards: args.targetShards },
+    ...args,
+      fileSystem,
     mapperClass: {
       createMapper: () => ({
         map: (key, value, context) => {
+          context.write(value.guid, value)
+        },
+      }),
+    },
+    reducerClass: {
+      createReducer: () => ({
+        reduce: (key, value, context) => {
           context.write(value.guid, value)
         },
       }),
