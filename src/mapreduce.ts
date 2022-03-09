@@ -66,15 +66,15 @@ export async function mapReduce(args: MapReduceJobConfig) {
   const user = args.user || process.env.USER || 'mr-user'
   const jobid = args.jobid || (args.name || 'mr-job') + `-${new Date().getTime()}`
   const subdir = `taskTracker/${user}/jobcache/${jobid}/work/`
-  const mapDirectory = (args.localDirectory ?? defaultDiretory) + subdir
+  const localDirectory = (args.localDirectory ?? defaultDiretory) + subdir
   const shuffleDirectory = (args.shuffleDirectory ?? defaultDiretory) + subdir
   const sourceShards = (await readShardFilenames(args.fileSystem, args.inputPaths[0])).numShards
   const sourceGetKey = args.inputKeyGetter ?? ((x) => x._key)
   const targetShards = args.outputShards || 1
-  const mapDirectories = new Array(targetShards)
-    .fill(mapDirectory)
+  const localDirectories = new Array(targetShards)
+    .fill(localDirectory)
     .map((x, i) => x + `${mapTempDirectoryPrefix}${i}`)
-  for (const directory of mapDirectories) await args.fileSystem.ensureDirectory(directory)
+  for (const directory of localDirectories) await args.fileSystem.ensureDirectory(directory)
 
   // map phase
   for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
@@ -99,7 +99,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
       ],
       targetFile: shuffleDirectory + `${shuffleFilenameFormat}.${inputshard}.${shuffleFormat}`,
       targetShards,
-      tempDirectories: mapDirectories,
+      tempDirectories: localDirectories,
     }
     console.log('map', options)
     await dbcp({
@@ -145,6 +145,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
     const options = {
       group: true,
       groupLabels: true,
+      orderBy: [keyProperty],
       sourceFiles: [
         {
           url:
@@ -155,25 +156,29 @@ export async function mapReduce(args: MapReduceJobConfig) {
         },
       ],
       targetFile: shardedFilename(args.outputPath, shard),
+    }
+    console.log('reduce', options)
+    await dbcp({
+      ...options,
+      fileSystem: args.fileSystem,
       transformObjectStream: () =>
         new Transform({
           objectMode: true,
           transform(data, _, callback) {
-            const reduceKey = data._key
-            const running = reducer.reduce(reduceKey, data, {
-              write: (key: Key, value: Value) => {
-                if (key !== reduceKey) throw new Error(`Reducer can't change key`)
-                this.push({ ...value, [keyProperty]: key })
-              },
-            })
+            const reduceKey = data[0].value._key
+            const running = reducer.reduce(
+              reduceKey,
+              data.map((x: { source: string; value: Record<string, any> }) => x.value),
+              {
+                write: (key: Key, value: Value) => {
+                  if (key !== reduceKey) throw new Error(`Reducer can't change key`)
+                  this.push(value)
+                },
+              }
+            )
             handleTransformCallback(callback, running)
           },
         }),
-    }
-    console.log('reduce', options)
-    await dbcp({
-      fileSystem: args.fileSystem,
-      ...options,
     })
     if (reducer.cleanup) {
       await reducer.cleanup({
@@ -185,6 +190,19 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 
   // cleanup phase
+  for (let targetShard = 0; targetShard < targetShards; targetShard++) {
+    if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
+    for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
+      if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
+      await args.fileSystem.removeFile(
+        shuffleDirectory +
+          shardedFilename(shuffleFilenameFormat, { index: targetShard, modulus: targetShards }) +
+          '.' +
+          shardedFilename(inputshardFilenameFormat, { index: sourceShard, modulus: sourceShards }) +
+          `.${shuffleFormat}`
+      )
+    }
+  }
 }
 
 export function handleTransformCallback(callback: () => void, running: void | Promise<void>) {

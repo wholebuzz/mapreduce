@@ -16,6 +16,8 @@ const {
 } = require('dbcp/dist/format')
 const dotenv = require('dotenv')
 const yargs = require('yargs')
+const { identityMapper } = require('./mappers')
+const { identityReducer } = require('./reducers')
 const { mapReduce } = require('./mapreduce')
 
 dotenv.config()
@@ -25,16 +27,21 @@ process.on('uncaughtException', (err) => console.error('unhandled exception', er
 async function main() {
   const formats = Object.values(DatabaseCopyFormat)
   const args = yargs.strict().options({
+    inputKey: {
+      description: 'Source file',
+      type: 'string',
+    },
     inputPaths: {
       description: 'Source file',
-      type: 'array',
       required: true,
+      type: 'array',
     },
     inputFormat: {
       choices: formats,
     },
     outputPath: {
       description: 'Target file',
+      required: true,
       type: 'string',
     },
     outputFormat: {
@@ -57,21 +64,10 @@ async function main() {
 
   const options = {
     ...args,
-      fileSystem,
-    mapperClass: {
-      createMapper: () => ({
-        map: (key, value, context) => {
-          context.write(value.guid, value)
-        },
-      }),
-    },
-    reducerClass: {
-      createReducer: () => ({
-        reduce: (key, value, context) => {
-          context.write(value.guid, value)
-        },
-      }),
-    },
+    fileSystem,
+    inputKeyGetter: args.inputKey ? (x) => x[args.inputKey] : undefined,
+    mapperClass: identityMapper,
+    reducerClass: identityReducer,
   }
 
   try {

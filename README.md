@@ -7,6 +7,12 @@ dependency on Reducers by using cloud storage as intermediary. We can run a larg
 and zero communication. Or we can run the usual many parallel Mappers, synchronizing only (via file IPC) the completion
 of the stages of Shuffle and Reduce.
 
+## Example
+
+```console
+$ yarn start --inputKey id --inputPaths ./test/test-SSSS-of-NNNN.json.gz --outputPath ./foo.resort-SSSS-of-NNNN.jsonl.gz --outputShards 8
+```
+
 ## Top-level:
   - API: `MapReduce(filein, fileout, mapperClass, reducerClass, combinerClass)`
 
