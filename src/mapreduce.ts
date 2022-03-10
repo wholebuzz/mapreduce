@@ -2,6 +2,7 @@ import { FileSystem } from '@wholebuzz/fs/lib/fs'
 import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
 import { DatabaseCopyFormats, dbcp } from 'dbcp'
 import { Transform } from 'stream'
+import { Factory, factoryConstruct } from './plugins'
 
 export const keyProperty = '_key'
 export const shuffleFormat = 'jsonl.gz'
@@ -15,8 +16,8 @@ export type Value = Record<string, any>
 export type Configuration = Record<string, any>
 export type KeyGetter = (value: Value) => Key
 export type MappedValue = Value & { [keyProperty]: Key }
-export type MapperClass = () => Mapper
-export type ReducerClass = () => Reducer
+export type MapperClass = Factory<Mapper>
+export type ReducerClass = Factory<Reducer>
 
 export interface Context {
   configuration?: Record<string, any>
@@ -80,7 +81,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
     const shard = { index: sourceShard, modulus: sourceShards }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
-    const mapper = args.mapperClass()
+    const mapper = factoryConstruct(args.mapperClass)
     if (mapper.configure) mapper.configure(args)
     if (mapper.setup) {
       await mapper.setup({
@@ -134,7 +135,8 @@ export async function mapReduce(args: MapReduceJobConfig) {
   for (let targetShard = 0; targetShard < targetShards; targetShard++) {
     if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
     const shard = { index: targetShard, modulus: targetShards }
-    const reducer = args.reducerClass()
+    const reducer = factoryConstruct(args.reducerClass)
+    if (reducer.configure) reducer.configure(args)
     if (reducer.setup) {
       await reducer.setup({
         write: () => {
@@ -205,13 +207,12 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 }
 
-export function handleTransformCallback(callback: () => void, running: void | Promise<void>) {
+export function handleTransformCallback(
+  callback: (err?: Error) => void,
+  running: void | Promise<void>
+) {
   if (running && running.then) {
-    running
-      .then(() => callback())
-      .catch((err) => {
-        throw err
-      })
+    running.then(() => callback()).catch((err) => callback(err))
   } else {
     callback()
   }

@@ -4,10 +4,22 @@ import path from 'path'
 
 export const requireFromString = require('require-from-string')
 
+export type ClassFactory<X> = new () => X
+export type ObjectFactory<X> = () => X
+export type Factory<X> = ClassFactory<X> | ObjectFactory<X>
+
+export function factoryConstruct<X>(factory: Factory<X>): X {
+  if (factory.prototype && factory.prototype.constructor.name) {
+    return new (factory as ClassFactory<X>)()
+  } else {
+    return (factory as ObjectFactory<X>)()
+  }
+}
+
 export async function loadPluginFiles<X>(
   fileSystem: FileSystem,
   url: string,
-  out: Record<string, () => X> = {}
+  out: Record<string, Factory<X>> = {}
 ) {
   if (url.endsWith('/')) {
     const files = await fileSystem.readDirectory(url)
@@ -21,7 +33,7 @@ export async function loadPluginFiles<X>(
 export async function loadPluginFile<X>(
   fileSystem: FileSystem,
   url: string,
-  out: Record<string, () => X> = {}
+  out: Record<string, Factory<X>> = {}
 ) {
   const plugin = requireFromString(
     await readableToString((await fileSystem.openReadableFile(url)).finish())
@@ -32,16 +44,11 @@ export async function loadPluginFile<X>(
 export function loadPlugin<X>(
   plugin: Record<string, any>,
   url: string,
-  out: Record<string, () => X> = {}
+  out: Record<string, Factory<X>> = {}
 ) {
   for (const key of Object.keys(plugin)) {
     const factory: any = plugin[key]
-    out[key === 'default' ? path.parse(url).name : key] = loadPluginItem(factory)
+    out[key === 'default' ? path.parse(url).name : key] = factory
   }
   return out
-}
-
-export function loadPluginItem(factory: any) {
-  const isConstructor = !!factory.prototype && !!factory.prototype.constructor.name
-  return isConstructor ? () => new factory() : () => factory()
 }

@@ -85,8 +85,8 @@ async function main() {
 
   const mapperClass = args.map ? plugins[args.map] : plugins.IdentityMapper
   const reducerClass = args.reduce ? plugins[args.reduce] : plugins.IdentityReducer
-  if (!mapperClass) throw new Error(`Unknown mapper: ${args.map}`)
-  if (!reducerClass) throw new Error(`Unknown mapper: ${args.reduce}`)
+  if (!mapperClass) { throw new Error(`Unknown mapper: ${args.map}`) }
+  if (!reducerClass) { throw new Error(`Unknown mapper: ${args.reduce}`) }
 
   const options = {
     ...args,

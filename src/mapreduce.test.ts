@@ -7,8 +7,9 @@ import { LocalFileSystem } from '@wholebuzz/fs/lib/local'
 import { S3FileSystem } from '@wholebuzz/fs/lib/s3'
 import { readableToString } from '@wholebuzz/fs/lib/stream'
 import hasha from 'hasha'
-import { Mapper, mapReduce, Reducer } from './mapreduce'
-import { loadPlugin } from './plugins'
+import { SetKeyMapper } from './mappers'
+import { mapReduce } from './mapreduce'
+import { DeleteKeyReducer, IdentityReducer } from './reducers'
 
 const fileSystem = new AnyFileSystem([
   { urlPrefix: 'gs://', fs: new GoogleCloudFileSystem() },
@@ -22,9 +23,6 @@ const targetShardedNumShards = 8
 const targetNDJsonUrl = '/tmp/mapreduce-test-final.jsonl.gz'
 const targetNDJsonHash = 'abb7fe0435d553c375c28e52aee28bdb'
 
-const mappers = loadPlugin<Mapper>(require('./mappers'), 'mappers')
-const reducers = loadPlugin<Reducer>(require('./reducers'), 'reducers')
-
 it('Should resort by guid', async () => {
   await mapReduce({
     configuration: { setKey: 'guid' },
@@ -32,8 +30,8 @@ it('Should resort by guid', async () => {
     inputPaths: [testJsonUrl],
     outputPath: targetShardedNDJsonUrl,
     outputShards: targetShardedNumShards,
-    mapperClass: mappers.SetKeyMapper,
-    reducerClass: reducers.IdentityReducer,
+    mapperClass: SetKeyMapper,
+    reducerClass: IdentityReducer,
   })
 })
 
@@ -44,8 +42,8 @@ it('Should resort by id', async () => {
     inputPaths: [targetShardedNDJsonUrl],
     outputPath: targetNDJsonUrl,
     outputShards: 1,
-    mapperClass: mappers.SetKeyMapper,
-    reducerClass: reducers.DeleteKeyReducer,
+    mapperClass: SetKeyMapper,
+    reducerClass: DeleteKeyReducer,
   })
   expect(await hashFile(targetNDJsonUrl)).toBe(targetNDJsonHash)
 })
