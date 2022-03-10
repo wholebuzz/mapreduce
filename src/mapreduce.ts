@@ -12,35 +12,33 @@ export const defaultDiretory = './'
 
 export type Key = string
 export type Value = Record<string, any>
+export type Configuration = Record<string, any>
 export type KeyGetter = (value: Value) => Key
 export type MappedValue = Value & { [keyProperty]: Key }
+export type MapperClass = () => Mapper
+export type ReducerClass = () => Reducer
 
 export interface Context {
+  configuration?: Record<string, any>
   write: (key: Key, value: Value) => void
 }
 
-export interface Mapper {
-  map: (key: Key, value: Value, context: Context) => void | Promise<void>
-}
-
-export interface Reducer {
-  reduce: (key: Key, values: Value[], context: Context) => void | Promise<void>
-}
-
-export interface BaseClass {
+export interface Base {
+  configure?: (config: MapReduceJobConfig) => void
   setup?: (context: Context) => Promise<void>
   cleanup?: (context: Context) => Promise<void>
 }
 
-export interface MapperClass {
-  createMapper: () => BaseClass & Mapper
+export interface Mapper extends Base {
+  map: (key: Key, value: Value, context: Context) => void | Promise<void>
 }
 
-export interface ReducerClass {
-  createReducer: () => BaseClass & Reducer
+export interface Reducer extends Base {
+  reduce: (key: Key, values: Value[], context: Context) => void | Promise<void>
 }
 
 export interface MapReduceJobConfig {
+  configuration?: Configuration
   name?: string
   user?: string
   jobid?: string
@@ -61,8 +59,9 @@ export interface MapReduceJobConfig {
 }
 
 export async function mapReduce(args: MapReduceJobConfig) {
-  if (args.inputPaths.length !== 1)
+  if (args.inputPaths.length !== 1) {
     throw new Error('Only one (sharded) input is currently supported')
+  }
   const user = args.user || process.env.USER || 'mr-user'
   const jobid = args.jobid || (args.name || 'mr-job') + `-${new Date().getTime()}`
   const subdir = `taskTracker/${user}/jobcache/${jobid}/work/`
@@ -81,7 +80,8 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
     const shard = { index: sourceShard, modulus: sourceShards }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
-    const mapper = args.mapperClass.createMapper()
+    const mapper = args.mapperClass()
+    if (mapper.configure) mapper.configure(args)
     if (mapper.setup) {
       await mapper.setup({
         write: () => {
@@ -134,7 +134,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
   for (let targetShard = 0; targetShard < targetShards; targetShard++) {
     if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
     const shard = { index: targetShard, modulus: targetShards }
-    const reducer = args.reducerClass.createReducer()
+    const reducer = args.reducerClass()
     if (reducer.setup) {
       await reducer.setup({
         write: () => {

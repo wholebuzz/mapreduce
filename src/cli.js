@@ -16,9 +16,8 @@ const {
 } = require('dbcp/dist/format')
 const dotenv = require('dotenv')
 const yargs = require('yargs')
-const { identityMapper } = require('./mappers')
-const { identityReducer } = require('./reducers')
 const { mapReduce } = require('./mapreduce')
+const { loadPlugin, loadPluginFiles } = require('./plugins')
 
 dotenv.config()
 // tslint:disable-next-line:no-console
@@ -27,6 +26,13 @@ process.on('uncaughtException', (err) => console.error('unhandled exception', er
 async function main() {
   const formats = Object.values(DatabaseCopyFormat)
   const args = yargs.strict().options({
+    config: {
+      description: 'Configuration',
+      type: 'string',
+    },
+    inputFormat: {
+      choices: formats,
+    },
     inputKey: {
       description: 'Source file',
       type: 'string',
@@ -36,7 +42,11 @@ async function main() {
       required: true,
       type: 'array',
     },
-    inputFormat: {
+    map: {
+      description: 'Mapper name',
+      type: 'string',
+    },
+    outputFormat: {
       choices: formats,
     },
     outputPath: {
@@ -44,12 +54,17 @@ async function main() {
       required: true,
       type: 'string',
     },
-    outputFormat: {
-      choices: formats,
-    },
     outputShards: {
       description: 'Target shards',
       type: 'number',
+    },
+    plugins: {
+      description: 'Plugins file or directory',
+      type: 'array',
+    },
+    reduce: {
+      description: 'Reducer name',
+      type: 'string',
     },
   }).argv
 
@@ -62,12 +77,24 @@ async function main() {
     { urlPrefix: '', fs: new LocalFileSystem() },
   ])
 
+  const plugins = loadPlugin(require('./mappers'), 'mappers')
+  loadPlugin(require('./reducers'), 'reducers', plugins)
+  for (const pluginFile of args.plugins ?? []) {
+    await loadPluginFiles(fileSystem, pluginFile, plugins)
+  }
+
+  const mapperClass = args.map ? plugins[args.map] : plugins.IdentityMapper
+  const reducerClass = args.reduce ? plugins[args.reduce] : plugins.IdentityReducer
+  if (!mapperClass) throw new Error(`Unknown mapper: ${args.map}`)
+  if (!reducerClass) throw new Error(`Unknown mapper: ${args.reduce}`)
+
   const options = {
     ...args,
+    configuration: args.config ? JSON.parse(args.config) : undefined,
     fileSystem,
     inputKeyGetter: args.inputKey ? (x) => x[args.inputKey] : undefined,
-    mapperClass: identityMapper,
-    reducerClass: identityReducer,
+    mapperClass,
+    reducerClass,
   }
 
   try {
@@ -78,6 +105,7 @@ async function main() {
     process.exit(-1)
   }
 
+  // tslint:disable-next-line:no-console
   console.log('done')
 }
 
