@@ -1,4 +1,5 @@
 import { FileSystem } from '@wholebuzz/fs/lib/fs'
+import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
 import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
 import { DatabaseCopyFormats, dbcp } from 'dbcp'
 import { Transform } from 'stream'
@@ -115,7 +116,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
               const running = mapper.map(sourceGetKey(data), data, {
                 write: (key: Key, value: Value) => this.push({ ...value, [keyProperty]: key }),
               })
-              handleTransformCallback(callback, running)
+              handleAsyncFunctionCallback(running, callback)
             },
           }),
       })),
@@ -178,7 +179,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
                 },
               }
             )
-            handleTransformCallback(callback, running)
+            handleAsyncFunctionCallback(running, callback)
           },
         }),
     })
@@ -204,16 +205,5 @@ export async function mapReduce(args: MapReduceJobConfig) {
           `.${shuffleFormat}`
       )
     }
-  }
-}
-
-export function handleTransformCallback(
-  callback: (err?: Error) => void,
-  running: void | Promise<void>
-) {
-  if (running && running.then) {
-    running.then(() => callback()).catch((err) => callback(err))
-  } else {
-    callback()
   }
 }
