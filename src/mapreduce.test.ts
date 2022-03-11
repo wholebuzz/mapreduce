@@ -5,8 +5,7 @@ import { AnyFileSystem } from '@wholebuzz/fs/lib/fs'
 import { GoogleCloudFileSystem } from '@wholebuzz/fs/lib/gcp'
 import { LocalFileSystem } from '@wholebuzz/fs/lib/local'
 import { S3FileSystem } from '@wholebuzz/fs/lib/s3'
-import { readableToString } from '@wholebuzz/fs/lib/stream'
-import hasha from 'hasha'
+import { hashFile } from 'dbcp/dist/test.fixture'
 import { SetKeyMapper } from './mappers'
 import { mapReduce } from './mapreduce'
 import { DeleteKeyReducer, IdentityReducer } from './reducers'
@@ -45,11 +44,5 @@ it('Should resort by id', async () => {
     mapperClass: SetKeyMapper,
     reducerClass: DeleteKeyReducer,
   })
-  expect(await hashFile(targetNDJsonUrl)).toBe(targetNDJsonHash)
+  expect(await hashFile(fileSystem, targetNDJsonUrl)).toBe(targetNDJsonHash)
 })
-
-async function hashFile(path: string) {
-  return readableToString(
-    (await fileSystem.openReadableFile(path)).pipe(hasha.stream({ algorithm: 'md5' })).finish()
-  )
-}

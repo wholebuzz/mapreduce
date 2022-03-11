@@ -1,8 +1,10 @@
-import { Context, Key, Mapper, MapperClass, MapReduceJobConfig, Value } from './mapreduce'
+import { Context, Key, Mapper, MapReduceJobConfig, Value } from './mapreduce'
 
-export const IdentityMapper: MapperClass = () => ({
-  map: (key, value, context) => context.write(key, value),
-})
+export class IdentityMapper implements Mapper {
+  map(key: Key, value: Value, context: Context) {
+    context.write(key, value)
+  }
+}
 
 export class SetKeyMapper implements Mapper {
   setKey: Key = ''

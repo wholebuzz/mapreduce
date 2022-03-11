@@ -1,27 +1,33 @@
 import { FileSystem } from '@wholebuzz/fs/lib/fs'
 import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
-import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
-import { DatabaseCopyFormats, dbcp } from 'dbcp'
+import { Logger, readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
+import { DatabaseCopySource, DatabaseCopyTarget, dbcp } from 'dbcp'
+import { DatabaseCopyFormat } from 'dbcp/dist/format'
 import { Transform } from 'stream'
-import { Factory, factoryConstruct } from './plugins'
+import { Factory, factoryConstruct, getObjectClassName } from './plugins'
 
-export const keyProperty = '_key'
-export const shuffleFormat = 'jsonl.gz'
-export const inputshardFilenameFormat = 'inputshard-SSSS-of-NNNN'
+export const defaultKeyProperty = '_key'
+export const defaultShuffleFormat = 'jsonl.gz'
 export const shuffleFilenameFormat = 'shuffle-SSSS-of-NNNN'
-export const mapTempDirectoryPrefix = 'maptmp'
+export const inputshardFilenameFormat = 'inputshard-SSSS-of-NNNN'
+export const localTempDirectoryPrefix = 'maptmp'
 export const defaultDiretory = './'
 
 export type Key = string
 export type Value = Record<string, any>
-export type Configuration = Record<string, any>
 export type KeyGetter = (value: Value) => Key
-export type MappedValue = Value & { [keyProperty]: Key }
+export type MappedValue = Value & { [defaultKeyProperty]: Key }
 export type MapperClass = Factory<Mapper>
 export type ReducerClass = Factory<Reducer>
 
+export interface Configuration extends Record<string, any> {
+  name?: string
+  user?: string
+  keyProperty?: string
+}
+
 export interface Context {
-  configuration?: Record<string, any>
+  configuration?: Configuration
   write: (key: Key, value: Value) => void
 }
 
@@ -41,16 +47,17 @@ export interface Reducer extends Base {
 
 export interface MapReduceJobConfig {
   configuration?: Configuration
-  name?: string
-  user?: string
-  jobid?: string
   fileSystem: FileSystem
+  jobid?: string
   inputPaths: string[]
-  inputFormat?: DatabaseCopyFormats
+  inputFormat?: DatabaseCopyFormat
+  inputSource?: DatabaseCopySource
   inputKeyGetter?: KeyGetter
   inputShardFilter?: (index: number) => boolean
+  logger?: Logger
   outputPath: string
-  outputFormat?: DatabaseCopyFormats
+  outputFormat?: DatabaseCopyFormat
+  outputTarget?: DatabaseCopyTarget
   outputShards?: number
   outputShardFilter?: (index: number) => boolean
   mapperClass: MapperClass
@@ -61,20 +68,31 @@ export interface MapReduceJobConfig {
 }
 
 export async function mapReduce(args: MapReduceJobConfig) {
-  if (args.inputPaths.length !== 1) {
-    throw new Error('Only one (sharded) input is currently supported')
-  }
-  const user = args.user || process.env.USER || 'mr-user'
-  const jobid = args.jobid || (args.name || 'mr-job') + `-${new Date().getTime()}`
+  const keyProperty = args.configuration?.keyProperty || defaultKeyProperty
+  const shuffleFormat = defaultShuffleFormat
+  const user = args.configuration?.user || process.env.USER || 'mr-user'
+  const jobid = args.jobid || (args.configuration?.name || 'mr-job') + `-${new Date().getTime()}`
   const subdir = `taskTracker/${user}/jobcache/${jobid}/work/`
   const localDirectory = (args.localDirectory ?? defaultDiretory) + subdir
   const shuffleDirectory = (args.shuffleDirectory ?? defaultDiretory) + subdir
-  const sourceShards = (await readShardFilenames(args.fileSystem, args.inputPaths[0])).numShards
-  const sourceGetKey = args.inputKeyGetter ?? ((x) => x._key)
+  const sourceGetKey = args.inputKeyGetter ?? ((x) => x[keyProperty])
   const targetShards = args.outputShards || 1
   const localDirectories = new Array(targetShards)
     .fill(localDirectory)
-    .map((x, i) => x + `${mapTempDirectoryPrefix}${i}`)
+    .map((x, i) => x + `${localTempDirectoryPrefix}${i}`)
+
+  // Validate input
+  if (!localDirectory.endsWith('/')) throw new Error('localDirectory should end with slash')
+  if (!shuffleDirectory.endsWith('/')) throw new Error('shuffleDirectory should end with slash')
+  if (args.inputPaths.length !== 1) {
+    throw new Error('Only one (sharded) input is currently supported')
+  }
+  if (args.logger) {
+    args.logger.info(`mapReduce configuration ${JSON.stringify(args.configuration ?? {})}`)
+  }
+
+  // Find source shards and prepare temp directories
+  const sourceShards = (await readShardFilenames(args.fileSystem, args.inputPaths[0])).numShards
   for (const directory of localDirectories) await args.fileSystem.ensureDirectory(directory)
 
   // map phase
@@ -92,33 +110,30 @@ export async function mapReduce(args: MapReduceJobConfig) {
       })
     }
     const options = {
-      externalSortBy: [keyProperty],
-      shardBy: keyProperty,
+      ...args.inputSource,
       sourceFiles: [
         {
           url: shardedFilename(args.inputPaths[0], shard),
         },
       ],
+      sourceFormat: args.inputFormat,
       targetFile: shuffleDirectory + `${shuffleFilenameFormat}.${inputshard}.${shuffleFormat}`,
       targetShards,
+      externalSortBy: [keyProperty],
+      shardBy: keyProperty,
       tempDirectories: localDirectories,
     }
-    console.log('map', options)
+    if (args.logger) {
+      args.logger.info(
+        `mapReduce ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`
+      )
+    }
     await dbcp({
       ...options,
       fileSystem: args.fileSystem,
       sourceFiles: options.sourceFiles.map((x) => ({
         ...x,
-        transformInputObjectStream: () =>
-          new Transform({
-            objectMode: true,
-            transform(data, _, callback) {
-              const running = mapper.map(sourceGetKey(data), data, {
-                write: (key: Key, value: Value) => this.push({ ...value, [keyProperty]: key }),
-              })
-              handleAsyncFunctionCallback(running, callback)
-            },
-          }),
+        transformInputObjectStream: () => mapTransform(mapper, keyProperty, sourceGetKey),
       })),
     })
     if (mapper.cleanup) {
@@ -146,6 +161,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
       })
     }
     const options = {
+      ...args.outputTarget,
       group: true,
       groupLabels: true,
       orderBy: [keyProperty],
@@ -160,28 +176,15 @@ export async function mapReduce(args: MapReduceJobConfig) {
       ],
       targetFile: shardedFilename(args.outputPath, shard),
     }
-    console.log('reduce', options)
+    if (args.logger) {
+      args.logger.info(
+        `mapReduce ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
+      )
+    }
     await dbcp({
       ...options,
       fileSystem: args.fileSystem,
-      transformObjectStream: () =>
-        new Transform({
-          objectMode: true,
-          transform(data, _, callback) {
-            const reduceKey = data[0].value._key
-            const running = reducer.reduce(
-              reduceKey,
-              data.map((x: { source: string; value: Record<string, any> }) => x.value),
-              {
-                write: (key: Key, value: Value) => {
-                  if (key !== reduceKey) throw new Error(`Reducer can't change key`)
-                  this.push(value)
-                },
-              }
-            )
-            handleAsyncFunctionCallback(running, callback)
-          },
-        }),
+      transformObjectStream: () => reduceTransform(reducer, keyProperty),
     })
     if (reducer.cleanup) {
       await reducer.cleanup({
@@ -207,3 +210,33 @@ export async function mapReduce(args: MapReduceJobConfig) {
     }
   }
 }
+
+export const mapTransform = (mapper: Mapper, keyProperty: string, getKey: KeyGetter) =>
+  new Transform({
+    objectMode: true,
+    transform(data, _, callback) {
+      const running = mapper.map(getKey(data), data, {
+        write: (key: Key, value: Value) => this.push({ ...value, [keyProperty]: key }),
+      })
+      handleAsyncFunctionCallback(running, callback)
+    },
+  })
+
+export const reduceTransform = (reducer: Reducer, keyProperty: string) =>
+  new Transform({
+    objectMode: true,
+    transform(data, _, callback) {
+      const reduceKey = data[0].value[keyProperty]
+      const running = reducer.reduce(
+        reduceKey,
+        data.map((x: { source: string; value: Record<string, any> }) => x.value),
+        {
+          write: (key: Key, value: Value) => {
+            if (key !== reduceKey) throw new Error(`Reducer can't change key`)
+            this.push(value)
+          },
+        }
+      )
+      handleAsyncFunctionCallback(running, callback)
+    },
+  })

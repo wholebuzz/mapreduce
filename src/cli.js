@@ -8,6 +8,7 @@ const {
   S3FileSystem,
   SMBFileSystem,
 } = require('@wholebuzz/fs')
+const { logger } = require('@wholebuzz/fs/lib/util')
 const {
   DatabaseCopyFormat,
   DatabaseCopySourceType,
@@ -17,7 +18,7 @@ const {
 const dotenv = require('dotenv')
 const yargs = require('yargs')
 const { mapReduce } = require('./mapreduce')
-const { loadPlugin, loadPluginFiles } = require('./plugins')
+const { loadPlugin, loadPluginFiles, parseConfiguration } = require('./plugins')
 
 dotenv.config()
 // tslint:disable-next-line:no-console
@@ -27,6 +28,7 @@ async function main() {
   const formats = Object.values(DatabaseCopyFormat)
   const args = yargs.strict().options({
     config: {
+      alias: 'D',
       description: 'Configuration',
       type: 'string',
     },
@@ -42,9 +44,18 @@ async function main() {
       required: true,
       type: 'array',
     },
+    localDirectory: {
+      description: 'Local directory',
+      type: 'string',
+    },
     map: {
       description: 'Mapper name',
       type: 'string',
+    },
+    numWorkers: {
+      description: 'Number of workers',
+      default: 1,
+      type: 'number',
     },
     outputFormat: {
       choices: formats,
@@ -66,6 +77,15 @@ async function main() {
       description: 'Reducer name',
       type: 'string',
     },
+    shuffleDirectory: {
+      description: 'Shuffle directory',
+      type: 'string',
+    },
+    workerIndex: {
+      description: 'Our worker index',
+      default: 0,
+      type: 'number',
+    },
   }).argv
 
   const httpFileSystem = new HTTPFileSystem()
@@ -85,14 +105,24 @@ async function main() {
 
   const mapperClass = args.map ? plugins[args.map] : plugins.IdentityMapper
   const reducerClass = args.reduce ? plugins[args.reduce] : plugins.IdentityReducer
-  if (!mapperClass) { throw new Error(`Unknown mapper: ${args.map}`) }
-  if (!reducerClass) { throw new Error(`Unknown mapper: ${args.reduce}`) }
+  if (!mapperClass) {
+    throw new Error(`Unknown mapper: ${args.map}`)
+  }
+  if (!reducerClass) {
+    throw new Error(`Unknown mapper: ${args.reduce}`)
+  }
+
+  const shardFilter =
+    args.numWorkers > 1 ? (index) => index % args.numWorkers === args.workedIndex : undefined
 
   const options = {
     ...args,
-    configuration: args.config ? JSON.parse(args.config) : undefined,
+    configuration: parseConfiguration(args.config),
     fileSystem,
     inputKeyGetter: args.inputKey ? (x) => x[args.inputKey] : undefined,
+    inputShardFilter: shardFilter,
+    outputShardFilter: shardFilter,
+    logger,
     mapperClass,
     reducerClass,
   }
