@@ -53,8 +53,8 @@ async function main() {
       type: 'string',
     },
     numWorkers: {
-      description: 'Number of workers',
       default: 1,
+      description: 'Number of workers',
       type: 'number',
     },
     outputFormat: {
@@ -82,8 +82,8 @@ async function main() {
       type: 'string',
     },
     workerIndex: {
-      description: 'Our worker index',
       default: 0,
+      description: 'Our worker index',
       type: 'number',
     },
   }).argv
@@ -121,9 +121,9 @@ async function main() {
     fileSystem,
     inputKeyGetter: args.inputKey ? (x) => x[args.inputKey] : undefined,
     inputShardFilter: shardFilter,
-    outputShardFilter: shardFilter,
     logger,
     mapperClass,
+    outputShardFilter: shardFilter,
     reducerClass,
   }
 

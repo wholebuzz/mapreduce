@@ -1,10 +1,9 @@
-import { FileSystem } from '@wholebuzz/fs/lib/fs'
 import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
-import { Logger, readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
-import { DatabaseCopySource, DatabaseCopyTarget, dbcp } from 'dbcp'
-import { DatabaseCopyFormat } from 'dbcp/dist/format'
+import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
+import { dbcp } from 'dbcp'
 import { Transform } from 'stream'
-import { Factory, factoryConstruct, getObjectClassName } from './plugins'
+import { factoryConstruct, getObjectClassName } from './plugins'
+import { Key, KeyGetter, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
 
 export const defaultKeyProperty = '_key'
 export const defaultShuffleFormat = 'jsonl.gz'
@@ -12,60 +11,6 @@ export const shuffleFilenameFormat = 'shuffle-SSSS-of-NNNN'
 export const inputshardFilenameFormat = 'inputshard-SSSS-of-NNNN'
 export const localTempDirectoryPrefix = 'maptmp'
 export const defaultDiretory = './'
-
-export type Key = string
-export type Value = Record<string, any>
-export type KeyGetter = (value: Value) => Key
-export type MappedValue = Value & { [defaultKeyProperty]: Key }
-export type MapperClass = Factory<Mapper>
-export type ReducerClass = Factory<Reducer>
-
-export interface Configuration extends Record<string, any> {
-  name?: string
-  user?: string
-  keyProperty?: string
-}
-
-export interface Context {
-  configuration?: Configuration
-  write: (key: Key, value: Value) => void
-}
-
-export interface Base {
-  configure?: (config: MapReduceJobConfig) => void
-  setup?: (context: Context) => Promise<void>
-  cleanup?: (context: Context) => Promise<void>
-}
-
-export interface Mapper extends Base {
-  map: (key: Key, value: Value, context: Context) => void | Promise<void>
-}
-
-export interface Reducer extends Base {
-  reduce: (key: Key, values: Value[], context: Context) => void | Promise<void>
-}
-
-export interface MapReduceJobConfig {
-  configuration?: Configuration
-  fileSystem: FileSystem
-  jobid?: string
-  inputPaths: string[]
-  inputFormat?: DatabaseCopyFormat
-  inputSource?: DatabaseCopySource
-  inputKeyGetter?: KeyGetter
-  inputShardFilter?: (index: number) => boolean
-  logger?: Logger
-  outputPath: string
-  outputFormat?: DatabaseCopyFormat
-  outputTarget?: DatabaseCopyTarget
-  outputShards?: number
-  outputShardFilter?: (index: number) => boolean
-  mapperClass: MapperClass
-  reducerClass: ReducerClass
-  combinerClass?: ReducerClass
-  localDirectory?: string
-  shuffleDirectory?: string
-}
 
 export async function mapReduce(args: MapReduceJobConfig) {
   const keyProperty = args.configuration?.keyProperty || defaultKeyProperty
@@ -133,7 +78,8 @@ export async function mapReduce(args: MapReduceJobConfig) {
       fileSystem: args.fileSystem,
       sourceFiles: options.sourceFiles.map((x) => ({
         ...x,
-        transformInputObjectStream: () => mapTransform(mapper, keyProperty, sourceGetKey),
+        transformInputObjectStream: () =>
+          mapTransform(mapper, { keyProperty, getInputKey: sourceGetKey }),
       })),
     })
     if (mapper.cleanup) {
@@ -196,31 +142,78 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 
   // cleanup phase
-  for (let targetShard = 0; targetShard < targetShards; targetShard++) {
-    if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
-    for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
-      if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
-      await args.fileSystem.removeFile(
-        shuffleDirectory +
-          shardedFilename(shuffleFilenameFormat, { index: targetShard, modulus: targetShards }) +
-          '.' +
-          shardedFilename(inputshardFilenameFormat, { index: sourceShard, modulus: sourceShards }) +
-          `.${shuffleFormat}`
-      )
+  if (args.cleanup !== false) {
+    for (let targetShard = 0; targetShard < targetShards; targetShard++) {
+      if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
+      for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
+        if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
+        await args.fileSystem.removeFile(
+          shuffleDirectory +
+            shardedFilename(shuffleFilenameFormat, { index: targetShard, modulus: targetShards }) +
+            '.' +
+            shardedFilename(inputshardFilenameFormat, {
+              index: sourceShard,
+              modulus: sourceShards,
+            }) +
+            `.${shuffleFormat}`
+        )
+      }
     }
   }
 }
 
-export const mapTransform = (mapper: Mapper, keyProperty: string, getKey: KeyGetter) =>
+export const mapTransform = (
+  mapper: Mapper,
+  args?: {
+    keyProperty?: string
+    getInputKey?: KeyGetter
+    transform?: (value: Value) => Value
+  }
+) =>
   new Transform({
     objectMode: true,
     transform(data, _, callback) {
-      const running = mapper.map(getKey(data), data, {
-        write: (key: Key, value: Value) => this.push({ ...value, [keyProperty]: key }),
+      const running = mapper.map(args?.getInputKey?.(data) ?? '', data, {
+        write: (key: Key, value: Value) => {
+          const output = { ...value }
+          const keyProp = mapper.keyProperty ?? args?.keyProperty
+          if (keyProp) output[keyProp] = key
+          this.push(args?.transform ? args.transform(output) : output)
+        },
       })
       handleAsyncFunctionCallback(running, callback)
     },
   })
+
+/*
+export const mapAndCombineWithLevelDbTransform = (
+  leveldb: LevelDB,
+  mapper: Mapper,
+  keyProperty: string,
+  getKey: KeyGetter,
+  combiner?: Reducer
+) =>
+  new Transform({
+    objectMode: true,
+    transform(data, _, callback) {
+      const output: Value[] = []
+      const running = mapper.map(getKey(data), data, {
+        write: (key: Key, value: Value) => output.push({ ...value, [keyProperty]: key }),
+      })
+      handleAsyncFunctionCallback(running, () => {
+        new Promise<void>(async (resolve, _reject) => {
+          for (const out of output) {
+            const key = out[keyProperty]
+            const current = (await leveldb.get(key)) || []
+            current.push(out)
+            await leveldb.put(key, current)
+          }
+          resolve()
+        }).then(() => callback())
+      })
+    },
+  })
+  */
 
 export const reduceTransform = (reducer: Reducer, keyProperty: string) =>
   new Transform({

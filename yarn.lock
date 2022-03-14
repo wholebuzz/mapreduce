@@ -2008,10 +2008,10 @@ db-json-column@^0.0.3:
   resolved "https://registry.yarnpkg.com/db-json-column/-/db-json-column-0.0.3.tgz#b01153994da6712074d30d95f4f970946809a05d"
   integrity sha512-aEXyL6kZxVAJJ0jVmZNlAHIKnVTPgd976oLIOgFmfVGNdvn4q4zmpQrVp04lPlxT13ezeNc4zH1t0zUBcSiDeQ==
 
-dbcp@^1.3.3:
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.3.3.tgz#a50a161802ba71b6005e35f36c5ebbb05033a179"
-  integrity sha512-mKj6m4JA616YYiFLHVULqVue/wcuLSyjMDULf48Ilk/cO3pF4Gc4WEIMXE4yPQOG9E9nv1aM6GbW5S3cuIkAWg==
+dbcp@^1.3.4:
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.3.4.tgz#0a51ddf0ed61d712a514abfc59502b81d3f010b5"
+  integrity sha512-G4mJ317xZY1K6cnD4hQH1jkEQyFPRS+aLtNT1FCz3xyIUOtkn2JsyIP0iFIa+hLfRjXol/cDpshediE+nwRvAw==
   dependencies:
     "@azure/identity" "^2.0.0"
     "@azure/storage-blob" "^12.8.0"

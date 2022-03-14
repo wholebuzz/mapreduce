@@ -1,5 +1,5 @@
-import { Context, defaultKeyProperty, Key, Reducer, Value } from './mapreduce'
-
+import { defaultKeyProperty } from './mapreduce'
+import { Context, Key, Reducer, Value } from './types'
 export class IdentityReducer implements Reducer {
   reduce(key: Key, value: Value, context: Context) {
     context.write(key, value[0])

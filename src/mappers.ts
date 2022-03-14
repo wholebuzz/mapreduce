@@ -1,4 +1,4 @@
-import { Context, Key, Mapper, MapReduceJobConfig, Value } from './mapreduce'
+import { Context, Key, Mapper, MapReduceJobConfig, Value } from './types'
 
 export class IdentityMapper implements Mapper {
   map(key: Key, value: Value, context: Context) {

@@ -65,10 +65,10 @@ export function parseConfiguration(input?: string | string[]) {
     } else {
       const pair = parseKeyValue(text)
       if (pair) {
-        const path = pair[0].split('.')
-        for (let obj = ret, i = 0; i < path.length; i++) {
-          const key = path[i].trim()
-          if (i === path.length - 1) obj[key] = pair[1]
+        const keyPath = pair[0].split('.')
+        for (let obj = ret, i = 0; i < keyPath.length; i++) {
+          const key = keyPath[i].trim()
+          if (i === keyPath.length - 1) obj[key] = pair[1]
           else {
             if (!obj[key]) obj[key] = {}
             obj = obj[key]
