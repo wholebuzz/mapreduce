@@ -1,8 +1,8 @@
-import { FileSystem } from '@wholebuzz/fs/lib/fs'
-import { Logger } from '@wholebuzz/fs/lib/util'
-import { DatabaseCopySource, DatabaseCopyTarget } from 'dbcp'
-import { DatabaseCopyFormat } from 'dbcp/dist/format'
-import { Factory } from './plugins'
+import type { FileSystem } from '@wholebuzz/fs/lib/fs'
+import type { Logger } from '@wholebuzz/fs/lib/util'
+import type { DatabaseCopySource, DatabaseCopyTarget } from 'dbcp'
+import type { DatabaseCopyFormat } from 'dbcp/dist/format'
+import type { Factory } from './plugins'
 
 export type Key = string
 export type Value = Record<string, any>
@@ -18,7 +18,7 @@ export interface Configuration extends Record<string, any> {
 
 export interface Context {
   configuration?: Configuration
-  write: (key: Key, value: Value) => void
+  write: (key: Key, value: any) => void
 }
 
 export interface Base {

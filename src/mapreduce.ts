@@ -1,9 +1,11 @@
 import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
 import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
 import { dbcp } from 'dbcp'
+import level from 'level'
+import { LevelUp } from 'levelup'
 import { Transform } from 'stream'
 import { factoryConstruct, getObjectClassName } from './plugins'
-import { Key, KeyGetter, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
+import { Configuration, Key, KeyGetter, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
 
 export const defaultKeyProperty = '_key'
 export const defaultShuffleFormat = 'jsonl.gz'
@@ -49,6 +51,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (mapper.configure) mapper.configure(args)
     if (mapper.setup) {
       await mapper.setup({
+        configuration: args.configuration,
         write: () => {
           throw new Error()
         },
@@ -79,11 +82,16 @@ export async function mapReduce(args: MapReduceJobConfig) {
       sourceFiles: options.sourceFiles.map((x) => ({
         ...x,
         transformInputObjectStream: () =>
-          mapTransform(mapper, { keyProperty, getInputKey: sourceGetKey }),
+          mapTransform(mapper, {
+            configuration: args.configuration,
+            keyProperty,
+            getInputKey: sourceGetKey,
+          }),
       })),
     })
     if (mapper.cleanup) {
       await mapper.cleanup({
+        configuration: args.configuration,
         write: () => {
           throw new Error()
         },
@@ -101,6 +109,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (reducer.configure) reducer.configure(args)
     if (reducer.setup) {
       await reducer.setup({
+        configuration: args.configuration,
         write: () => {
           throw new Error()
         },
@@ -130,10 +139,12 @@ export async function mapReduce(args: MapReduceJobConfig) {
     await dbcp({
       ...options,
       fileSystem: args.fileSystem,
-      transformObjectStream: () => reduceTransform(reducer, keyProperty),
+      transformObjectStream: () =>
+        reduceTransform(reducer, { configuration: args.configuration, keyProperty }),
     })
     if (reducer.cleanup) {
       await reducer.cleanup({
+        configuration: args.configuration,
         write: () => {
           throw new Error()
         },
@@ -162,11 +173,25 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 }
 
+export function mappedObject(
+  key: Key,
+  value: any,
+  args: {
+    keyProperty?: string
+    transform?: (value: Value) => Value
+  }
+): Value {
+  const output: Value = typeof value === 'object' ? { ...value } : { value }
+  if (args.keyProperty) output[args.keyProperty] = key
+  return args?.transform ? args.transform(output) : output
+}
+
 export const mapTransform = (
   mapper: Mapper,
   args?: {
-    keyProperty?: string
+    configuration?: Configuration
     getInputKey?: KeyGetter
+    keyProperty?: string
     transform?: (value: Value) => Value
   }
 ) =>
@@ -174,56 +199,84 @@ export const mapTransform = (
     objectMode: true,
     transform(data, _, callback) {
       const running = mapper.map(args?.getInputKey?.(data) ?? '', data, {
-        write: (key: Key, value: Value) => {
-          const output = { ...value }
-          const keyProp = mapper.keyProperty ?? args?.keyProperty
-          if (keyProp) output[keyProp] = key
-          this.push(args?.transform ? args.transform(output) : output)
-        },
+        configuration: args?.configuration,
+        write: (key: Key, value: any) =>
+          this.push(
+            mappedObject(key, value, {
+              keyProperty: mapper.keyProperty ?? args?.keyProperty,
+              transform: args?.transform,
+            })
+          ),
       })
       handleAsyncFunctionCallback(running, callback)
     },
   })
 
-/*
 export const mapAndCombineWithLevelDbTransform = (
-  leveldb: LevelDB,
   mapper: Mapper,
-  keyProperty: string,
-  getKey: KeyGetter,
-  combiner?: Reducer
+  leveldb: level.LevelDB | LevelUp,
+  args: {
+    configuration?: Configuration
+    getInputKey?: KeyGetter
+    keyProperty: string
+    combiner?: Reducer
+    transform?: (value: Value) => Value
+  }
 ) =>
   new Transform({
     objectMode: true,
     transform(data, _, callback) {
       const output: Value[] = []
-      const running = mapper.map(getKey(data), data, {
-        write: (key: Key, value: Value) => output.push({ ...value, [keyProperty]: key }),
+      const running = mapper.map(args?.getInputKey?.(data) ?? '', data, {
+        configuration: args.configuration,
+        write: (key: Key, value: any) =>
+          output.push(
+            mappedObject(key, value, {
+              keyProperty: mapper.keyProperty ?? args.keyProperty,
+              transform: args.transform,
+            })
+          ),
       })
       handleAsyncFunctionCallback(running, () => {
         new Promise<void>(async (resolve, _reject) => {
           for (const out of output) {
-            const key = out[keyProperty]
-            const current = (await leveldb.get(key)) || []
+            const combinerOutput: Value[] = []
+            const combineKey = out[args.keyProperty]
+            const current = (await leveldb.get(combineKey)) || []
             current.push(out)
-            await leveldb.put(key, current)
+            if (current.length > 1 && args.combiner) {
+              const combinerRunning = args.combiner.reduce(combineKey, current, {
+                configuration: args.configuration,
+                write: (key: Key, value: any) => {
+                  if (key !== combineKey) throw new Error(`Combiner can't change key`)
+                  combinerOutput.push(value)
+                },
+              })
+              if ((combinerRunning as any).then) await combinerRunning
+            }
+            await leveldb.put(combineKey, args.combiner ? combinerOutput : current)
           }
           resolve()
-        }).then(() => callback())
+        })
+          .then(() => callback())
+          .catch((err) => callback(err))
       })
     },
   })
-  */
 
-export const reduceTransform = (reducer: Reducer, keyProperty: string) =>
+export const reduceTransform = (
+  reducer: Reducer,
+  args: { configuration?: Configuration; keyProperty: string }
+) =>
   new Transform({
     objectMode: true,
     transform(data, _, callback) {
-      const reduceKey = data[0].value[keyProperty]
+      const reduceKey = data[0].value[args.keyProperty]
       const running = reducer.reduce(
         reduceKey,
         data.map((x: { source: string; value: Record<string, any> }) => x.value),
         {
+          configuration: args.configuration,
           write: (key: Key, value: Value) => {
             if (key !== reduceKey) throw new Error(`Reducer can't change key`)
             this.push(value)
