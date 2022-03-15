@@ -50,12 +50,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
     const mapper = factoryConstruct(args.mapperClass)
     if (mapper.configure) mapper.configure(args)
     if (mapper.setup) {
-      await mapper.setup({
-        configuration: args.configuration,
-        write: () => {
-          throw new Error()
-        },
-      })
+      await mapper.setup(immutableContext(args.configuration))
     }
     const options = {
       ...args.inputSource,
@@ -90,12 +85,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
       })),
     })
     if (mapper.cleanup) {
-      await mapper.cleanup({
-        configuration: args.configuration,
-        write: () => {
-          throw new Error()
-        },
-      })
+      await mapper.cleanup(immutableContext(args.configuration))
     }
   }
 
@@ -108,12 +98,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
     const reducer = factoryConstruct(args.reducerClass)
     if (reducer.configure) reducer.configure(args)
     if (reducer.setup) {
-      await reducer.setup({
-        configuration: args.configuration,
-        write: () => {
-          throw new Error()
-        },
-      })
+      await reducer.setup(immutableContext(args.configuration))
     }
     const options = {
       ...args.outputTarget,
@@ -143,12 +128,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
         reduceTransform(reducer, { configuration: args.configuration, keyProperty }),
     })
     if (reducer.cleanup) {
-      await reducer.cleanup({
-        configuration: args.configuration,
-        write: () => {
-          throw new Error()
-        },
-      })
+      await reducer.cleanup(immutableContext(args.configuration))
     }
   }
 
@@ -172,6 +152,13 @@ export async function mapReduce(args: MapReduceJobConfig) {
     }
   }
 }
+
+export const immutableContext = (configuration?: Configuration) => ({
+  configuration,
+  write: () => {
+    throw new Error()
+  },
+})
 
 export function mappedObject(
   key: Key,
