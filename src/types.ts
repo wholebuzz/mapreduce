@@ -37,6 +37,12 @@ export interface Reducer extends Base {
   reduce: (key: Key, values: Value[], context: Context) => void | Promise<void>
 }
 
+export enum MapperImplementation {
+  externalSorting = 'externalSorting',
+  leveldb = 'leveldb',
+  // memory = 'memory',
+}
+
 export interface MapReduceJobConfig {
   configuration?: Configuration
   fileSystem: FileSystem
@@ -53,6 +59,7 @@ export interface MapReduceJobConfig {
   outputShards?: number
   outputShardFilter?: (index: number) => boolean
   mapperClass: MapperClass
+  mapperImplementation?: MapperImplementation
   reducerClass: ReducerClass
   combinerClass?: ReducerClass
   localDirectory?: string

@@ -19,6 +19,7 @@ const dotenv = require('dotenv')
 const yargs = require('yargs')
 const { mapReduce } = require('./mapreduce')
 const { loadPlugin, loadPluginFiles, parseConfiguration } = require('./plugins')
+const { MapperImplementation } = require('./types')
 
 dotenv.config()
 // tslint:disable-next-line:no-console
@@ -50,6 +51,12 @@ async function main() {
     },
     map: {
       description: 'Mapper name',
+      type: 'string',
+    },
+    mapperImplementation: {
+      choices: Object.values(MapperImplementation),
+      default: MapperImplementation.externalSorting,
+      description: 'Mapper implementation',
       type: 'string',
     },
     numWorkers: {

@@ -3,8 +3,18 @@ import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
 import { DatabaseCopyOptions, dbcp } from 'dbcp'
 import { updateObjectProperties } from 'dbcp/dist/util'
 import { Transform } from 'stream'
+import { runMapPhaseWithLevelDb } from './leveldb'
 import { factoryConstruct, getObjectClassName } from './plugins'
-import { Configuration, Key, KeyGetter, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
+import {
+  Configuration,
+  Key,
+  KeyGetter,
+  Mapper,
+  MapperImplementation,
+  MapReduceJobConfig,
+  Reducer,
+  Value,
+} from './types'
 
 export const defaultKeyProperty = '_key'
 export const defaultShuffleFormat = 'jsonl.gz'
@@ -24,7 +34,8 @@ export async function mapReduce(args: MapReduceJobConfig) {
   const targetShards = args.outputShards || 1
   const localDirectories = new Array(targetShards)
     .fill(localDirectory)
-    .map((x, i) => x + `${localTempDirectoryPrefix}${i}`)
+    .map((x, i) => x + `${localTempDirectoryPrefix}${i}/`)
+  const runMapPhase = getMapperImplementation(args.mapperImplementation)
 
   // Validate input
   if (!localDirectory.endsWith('/')) throw new Error('localDirectory should end with slash')
@@ -50,6 +61,11 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (mapper.setup) {
       await mapper.setup(immutableContext(args.configuration))
     }
+    const combiner = args.combinerClass ? factoryConstruct(args.combinerClass) : undefined
+    if (combiner?.configure) combiner.configure(args)
+    if (combiner?.setup) {
+      await combiner?.setup(immutableContext(args.configuration))
+    }
     const options: DatabaseCopyOptions = {
       ...args.inputSource,
       shardBy: keyProperty,
@@ -63,13 +79,14 @@ export async function mapReduce(args: MapReduceJobConfig) {
       targetShards,
       tempDirectories: localDirectories,
     }
-    await runMapPhase(mapper, args, options)
+    await runMapPhase(mapper, combiner, args, options)
+    if (combiner?.cleanup) {
+      await combiner.cleanup(immutableContext(args.configuration))
+    }
     if (mapper.cleanup) {
       await mapper.cleanup(immutableContext(args.configuration))
     }
   }
-
-  // shuffle phase
 
   // reduce phase
   for (let targetShard = 0; targetShard < targetShards; targetShard++) {
@@ -122,56 +139,14 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 }
 
-export async function runMapPhase(
-  mapper: Mapper,
-  args: MapReduceJobConfig,
-  options: DatabaseCopyOptions
-) {
-  const keyProperty = options.shardBy!
-  options = {
-    ...options,
-    externalSortBy: [keyProperty],
+export function getMapperImplementation(type?: MapperImplementation) {
+  switch (type) {
+    case MapperImplementation.externalSorting:
+    default:
+      return runMapPhaseWithExternalSorting
+    case MapperImplementation.leveldb:
+      return runMapPhaseWithLevelDb
   }
-  if (args.logger) {
-    args.logger.info(`mapReduce ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`)
-  }
-  await dbcp({
-    ...options,
-    fileSystem: args.fileSystem,
-    sourceFiles: updateObjectProperties(options.sourceFiles, (x) => ({
-      ...x,
-      transformInputObjectStream: () =>
-        mapTransform(mapper, {
-          configuration: args.configuration,
-          keyProperty,
-          getInputKey: args.inputKeyGetter ?? ((x) => x[keyProperty]),
-        }),
-    })),
-  })
-}
-
-export async function runReducePhase(
-  reducer: Reducer,
-  args: MapReduceJobConfig,
-  options: DatabaseCopyOptions
-) {
-  const keyProperty = options.orderBy![0]
-  options = {
-    ...options,
-    group: true,
-    groupLabels: true,
-  }
-  if (args.logger) {
-    args.logger.info(
-      `mapReduce ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
-    )
-  }
-  await dbcp({
-    ...options,
-    fileSystem: args.fileSystem,
-    transformObjectStream: () =>
-      reduceTransform(reducer, { configuration: args.configuration, keyProperty }),
-  })
 }
 
 export const immutableContext = (configuration?: Configuration) => ({
@@ -242,3 +217,59 @@ export const reduceTransform = (
       handleAsyncFunctionCallback(running, callback)
     },
   })
+
+export async function runReducePhase(
+  reducer: Reducer,
+  args: MapReduceJobConfig,
+  options: DatabaseCopyOptions
+) {
+  const keyProperty = options.orderBy![0]
+  options = {
+    ...options,
+    group: true,
+    groupLabels: true,
+  }
+  if (args.logger) {
+    args.logger.info(
+      `mapReduce ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
+    )
+  }
+  await dbcp({
+    ...options,
+    fileSystem: args.fileSystem,
+    transformObjectStream: () =>
+      reduceTransform(reducer, { configuration: args.configuration, keyProperty }),
+  })
+}
+
+export async function runMapPhaseWithExternalSorting(
+  mapper: Mapper,
+  combiner: Reducer | undefined,
+  args: MapReduceJobConfig,
+  options: DatabaseCopyOptions
+) {
+  const keyProperty = options.shardBy!
+  options = {
+    ...options,
+    externalSortBy: [keyProperty],
+  }
+  if (combiner) {
+    throw new Error(`MapperImplementation.externalSorting doesn't support combiners`)
+  }
+  if (args.logger) {
+    args.logger.info(`mapReduce ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`)
+  }
+  await dbcp({
+    ...options,
+    fileSystem: args.fileSystem,
+    sourceFiles: updateObjectProperties(options.sourceFiles, (x) => ({
+      ...x,
+      transformInputObjectStream: () =>
+        mapTransform(mapper, {
+          configuration: args.configuration,
+          keyProperty,
+          getInputKey: args.inputKeyGetter ?? ((v) => v[keyProperty]),
+        }),
+    })),
+  })
+}
