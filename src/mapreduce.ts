@@ -1,8 +1,7 @@
 import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
 import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
-import { dbcp } from 'dbcp'
-import level from 'level'
-import { LevelUp } from 'levelup'
+import { DatabaseCopyOptions, dbcp } from 'dbcp'
+import { updateObjectProperties } from 'dbcp/dist/util'
 import { Transform } from 'stream'
 import { factoryConstruct, getObjectClassName } from './plugins'
 import { Configuration, Key, KeyGetter, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
@@ -22,7 +21,6 @@ export async function mapReduce(args: MapReduceJobConfig) {
   const subdir = `taskTracker/${user}/jobcache/${jobid}/work/`
   const localDirectory = (args.localDirectory ?? defaultDiretory) + subdir
   const shuffleDirectory = (args.shuffleDirectory ?? defaultDiretory) + subdir
-  const sourceGetKey = args.inputKeyGetter ?? ((x) => x[keyProperty])
   const targetShards = args.outputShards || 1
   const localDirectories = new Array(targetShards)
     .fill(localDirectory)
@@ -52,8 +50,9 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (mapper.setup) {
       await mapper.setup(immutableContext(args.configuration))
     }
-    const options = {
+    const options: DatabaseCopyOptions = {
       ...args.inputSource,
+      shardBy: keyProperty,
       sourceFiles: [
         {
           url: shardedFilename(args.inputPaths[0], shard),
@@ -62,28 +61,9 @@ export async function mapReduce(args: MapReduceJobConfig) {
       sourceFormat: args.inputFormat,
       targetFile: shuffleDirectory + `${shuffleFilenameFormat}.${inputshard}.${shuffleFormat}`,
       targetShards,
-      externalSortBy: [keyProperty],
-      shardBy: keyProperty,
       tempDirectories: localDirectories,
     }
-    if (args.logger) {
-      args.logger.info(
-        `mapReduce ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`
-      )
-    }
-    await dbcp({
-      ...options,
-      fileSystem: args.fileSystem,
-      sourceFiles: options.sourceFiles.map((x) => ({
-        ...x,
-        transformInputObjectStream: () =>
-          mapTransform(mapper, {
-            configuration: args.configuration,
-            keyProperty,
-            getInputKey: sourceGetKey,
-          }),
-      })),
-    })
+    await runMapPhase(mapper, args, options)
     if (mapper.cleanup) {
       await mapper.cleanup(immutableContext(args.configuration))
     }
@@ -102,8 +82,6 @@ export async function mapReduce(args: MapReduceJobConfig) {
     }
     const options = {
       ...args.outputTarget,
-      group: true,
-      groupLabels: true,
       orderBy: [keyProperty],
       sourceFiles: [
         {
@@ -116,17 +94,8 @@ export async function mapReduce(args: MapReduceJobConfig) {
       ],
       targetFile: shardedFilename(args.outputPath, shard),
     }
-    if (args.logger) {
-      args.logger.info(
-        `mapReduce ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
-      )
-    }
-    await dbcp({
-      ...options,
-      fileSystem: args.fileSystem,
-      transformObjectStream: () =>
-        reduceTransform(reducer, { configuration: args.configuration, keyProperty }),
-    })
+    await runReducePhase(reducer, args, options)
+
     if (reducer.cleanup) {
       await reducer.cleanup(immutableContext(args.configuration))
     }
@@ -151,6 +120,58 @@ export async function mapReduce(args: MapReduceJobConfig) {
       }
     }
   }
+}
+
+export async function runMapPhase(
+  mapper: Mapper,
+  args: MapReduceJobConfig,
+  options: DatabaseCopyOptions
+) {
+  const keyProperty = options.shardBy!
+  options = {
+    ...options,
+    externalSortBy: [keyProperty],
+  }
+  if (args.logger) {
+    args.logger.info(`mapReduce ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`)
+  }
+  await dbcp({
+    ...options,
+    fileSystem: args.fileSystem,
+    sourceFiles: updateObjectProperties(options.sourceFiles, (x) => ({
+      ...x,
+      transformInputObjectStream: () =>
+        mapTransform(mapper, {
+          configuration: args.configuration,
+          keyProperty,
+          getInputKey: args.inputKeyGetter ?? ((x) => x[keyProperty]),
+        }),
+    })),
+  })
+}
+
+export async function runReducePhase(
+  reducer: Reducer,
+  args: MapReduceJobConfig,
+  options: DatabaseCopyOptions
+) {
+  const keyProperty = options.orderBy![0]
+  options = {
+    ...options,
+    group: true,
+    groupLabels: true,
+  }
+  if (args.logger) {
+    args.logger.info(
+      `mapReduce ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
+    )
+  }
+  await dbcp({
+    ...options,
+    fileSystem: args.fileSystem,
+    transformObjectStream: () =>
+      reduceTransform(reducer, { configuration: args.configuration, keyProperty }),
+  })
 }
 
 export const immutableContext = (configuration?: Configuration) => ({
@@ -196,58 +217,6 @@ export const mapTransform = (
           ),
       })
       handleAsyncFunctionCallback(running, callback)
-    },
-  })
-
-export const mapAndCombineWithLevelDbTransform = (
-  mapper: Mapper,
-  leveldb: level.LevelDB | LevelUp,
-  args: {
-    configuration?: Configuration
-    getInputKey?: KeyGetter
-    keyProperty: string
-    combiner?: Reducer
-    transform?: (value: Value) => Value
-  }
-) =>
-  new Transform({
-    objectMode: true,
-    transform(data, _, callback) {
-      const output: Value[] = []
-      const running = mapper.map(args?.getInputKey?.(data) ?? '', data, {
-        configuration: args.configuration,
-        write: (key: Key, value: any) =>
-          output.push(
-            mappedObject(key, value, {
-              keyProperty: mapper.keyProperty ?? args.keyProperty,
-              transform: args.transform,
-            })
-          ),
-      })
-      handleAsyncFunctionCallback(running, () => {
-        new Promise<void>(async (resolve, _reject) => {
-          for (const out of output) {
-            const combinerOutput: Value[] = []
-            const combineKey = out[args.keyProperty]
-            const current = (await leveldb.get(combineKey)) || []
-            current.push(out)
-            if (current.length > 1 && args.combiner) {
-              const combinerRunning = args.combiner.reduce(combineKey, current, {
-                configuration: args.configuration,
-                write: (key: Key, value: any) => {
-                  if (key !== combineKey) throw new Error(`Combiner can't change key`)
-                  combinerOutput.push(value)
-                },
-              })
-              if ((combinerRunning as any).then) await combinerRunning
-            }
-            await leveldb.put(combineKey, args.combiner ? combinerOutput : current)
-          }
-          resolve()
-        })
-          .then(() => callback())
-          .catch((err) => callback(err))
-      })
     },
   })
 
