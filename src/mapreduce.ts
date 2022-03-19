@@ -35,7 +35,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
   const localDirectories = new Array(targetShards)
     .fill(localDirectory)
     .map((x, i) => x + `${localTempDirectoryPrefix}${i}/`)
-  const runMapPhase = getMapperImplementation(args.mapperImplementation)
+  const runMapPhase = getMapperImplementation(args.mapperImplementation, !!args.combinerClass)
 
   // Validate input
   if (!localDirectory.endsWith('/')) throw new Error('localDirectory should end with slash')
@@ -52,20 +52,12 @@ export async function mapReduce(args: MapReduceJobConfig) {
   for (const directory of localDirectories) await args.fileSystem.ensureDirectory(directory)
 
   // map phase
-  for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
+  let skippedMapper = !!args.skipMapper
+  const runMapper = args.runMapper !== false && !skippedMapper
+  for (let sourceShard = 0; runMapper && sourceShard < sourceShards; sourceShard++) {
     if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
     const shard = { index: sourceShard, modulus: sourceShards }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
-    const mapper = factoryConstruct(args.mapperClass)
-    if (mapper.configure) mapper.configure(args)
-    if (mapper.setup) {
-      await mapper.setup(immutableContext(args.configuration))
-    }
-    const combiner = args.combinerClass ? factoryConstruct(args.combinerClass) : undefined
-    if (combiner?.configure) combiner.configure(args)
-    if (combiner?.setup) {
-      await combiner?.setup(immutableContext(args.configuration))
-    }
     const options: DatabaseCopyOptions = {
       ...args.inputSource,
       shardBy: keyProperty,
@@ -79,6 +71,26 @@ export async function mapReduce(args: MapReduceJobConfig) {
       targetShards,
       tempDirectories: localDirectories,
     }
+    if (!args.mapperClass) throw new Error('No mapper')
+    const mapper = factoryConstruct(args.mapperClass)
+    if (getObjectClassName(mapper) === 'IdentityMapper' && sourceShards === targetShards) {
+      if (args.skipMapper || args.autoSkipMapper) {
+        skippedMapper = true
+        break
+      } else {
+        args.logger?.info(`Using IdentityMapper with equal input and output shards`)
+        args.logger?.info(`Consider using skipMapper or autoSkipMapper`)
+      }
+    }
+    if (mapper.configure) mapper.configure(args)
+    if (mapper.setup) {
+      await mapper.setup(immutableContext(args.configuration))
+    }
+    const combiner = args.combinerClass ? factoryConstruct(args.combinerClass) : undefined
+    if (combiner?.configure) combiner.configure(args)
+    if (combiner?.setup) {
+      await combiner?.setup(immutableContext(args.configuration))
+    }
     await runMapPhase(mapper, combiner, args, options)
     if (combiner?.cleanup) {
       await combiner.cleanup(immutableContext(args.configuration))
@@ -89,14 +101,11 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 
   // reduce phase
-  for (let targetShard = 0; targetShard < targetShards; targetShard++) {
+  const skippedReducer = !!args.skipReducer
+  const runReducer = args.runReducer !== false && !skippedReducer
+  for (let targetShard = 0; runReducer && targetShard < targetShards; targetShard++) {
     if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
     const shard = { index: targetShard, modulus: targetShards }
-    const reducer = factoryConstruct(args.reducerClass)
-    if (reducer.configure) reducer.configure(args)
-    if (reducer.setup) {
-      await reducer.setup(immutableContext(args.configuration))
-    }
     const options = {
       ...args.outputTarget,
       orderBy: [keyProperty],
@@ -111,8 +120,13 @@ export async function mapReduce(args: MapReduceJobConfig) {
       ],
       targetFile: shardedFilename(args.outputPath, shard),
     }
+    if (!args.reducerClass) throw new Error('No reducer')
+    const reducer = factoryConstruct(args.reducerClass)
+    if (reducer.configure) reducer.configure(args)
+    if (reducer.setup) {
+      await reducer.setup(immutableContext(args.configuration))
+    }
     await runReducePhase(reducer, args, options)
-
     if (reducer.cleanup) {
       await reducer.cleanup(immutableContext(args.configuration))
     }
@@ -139,13 +153,14 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 }
 
-export function getMapperImplementation(type?: MapperImplementation) {
+export function getMapperImplementation(type?: MapperImplementation, hasCombiner?: boolean) {
   switch (type) {
     case MapperImplementation.externalSorting:
-    default:
       return runMapPhaseWithExternalSorting
     case MapperImplementation.leveldb:
       return runMapPhaseWithLevelDb
+    default:
+      return hasCombiner ? runMapPhaseWithLevelDb : runMapPhaseWithExternalSorting
   }
 }
 

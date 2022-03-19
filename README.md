@@ -2,6 +2,8 @@
 
 ## Communication-free MapReduce
 
+### MapReduce for the 99%
+
 Instead of starting a Master which starts simultaneous Mappers and Reducers on a cluster, let's decouple Mappers' 
 dependency on Reducers by using cloud storage as intermediary. We can run a large MapReduce job with a single-thread
 and zero communication. Or we can run the usual many parallel Mappers, synchronizing only (via file IPC) the completion

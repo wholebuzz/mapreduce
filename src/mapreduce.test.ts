@@ -35,7 +35,7 @@ describe('With MapperImplementation.externalSorting', () => {
 describe('With MapperImplementation.leveldb', () => {
   const mapperImplementation = MapperImplementation.leveldb
   it('Should sort by guid', () => testSortByGuid({ mapperImplementation }))
-  // it('Should sort by id', () => testSortById({ mapperImplementation }))
+  it('Should sort by id', () => testSortById({ mapperImplementation }))
 })
 
 async function testSortByGuid(options: Partial<MapReduceJobConfig>) {

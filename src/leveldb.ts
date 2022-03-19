@@ -1,16 +1,17 @@
-import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
+import { streamAsyncFilter } from '@wholebuzz/fs/lib/stream'
 import { shardedFilename } from '@wholebuzz/fs/lib/util'
 import { DatabaseCopyOptions, dbcp } from 'dbcp'
 import { DatabaseCopyFormat } from 'dbcp/dist/format'
-import { openLevelDb, streamFromLevelDb, streamToLevelDb } from 'dbcp/dist/leveldb'
+import { levelIteratorStream, openLevelDb } from 'dbcp/dist/leveldb'
 import { updateObjectProperties } from 'dbcp/dist/util'
 import level from 'level'
 import { LevelUp } from 'levelup'
 import pSettle from 'p-settle'
 import { Transform } from 'stream'
-import { mappedObject, mapTransform } from './mapreduce'
+import StreamTree from 'tree-stream'
+import { mapTransform } from './mapreduce'
 import { getObjectClassName } from './plugins'
-import { Configuration, Key, KeyGetter, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
+import { Configuration, Key, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
 
 export async function runMapPhaseWithLevelDb(
   mapper: Mapper,
@@ -54,7 +55,15 @@ export async function runMapPhaseWithLevelDb(
           }),
       })),
       targetFormat: DatabaseCopyFormat.object,
-      targetStream: dbs.map((db) => streamToLevelDb(db.db, { getKey: (x) => x[keyProperty] })),
+      targetStream: dbs.map((db) =>
+        StreamTree.writable(
+          streamAsyncFilter(async (item: any) =>
+            combineWithLevelDb(item, db.db, {
+              keyProperty,
+            })
+          )
+        )
+      ),
     })
 
     // shuffle phase
@@ -64,7 +73,7 @@ export async function runMapPhaseWithLevelDb(
         (db, index) => () =>
           dbcp({
             fileSystem: args.fileSystem,
-            sourceStream: streamFromLevelDb(db.db),
+            sourceStream: streamFromCombinedLevelDb(db.db),
             targetFile: shardedFilename(targetFile, {
               index,
               modulus: options.targetShards!,
@@ -83,55 +92,54 @@ export async function runMapPhaseWithLevelDb(
   }
 }
 
-export const mapAndCombineWithLevelDbTransform = (
-  mapper: Mapper,
+export async function combineWithLevelDb(
+  out: Value,
   leveldb: level.LevelDB | LevelUp,
   args: {
     configuration?: Configuration
-    getInputKey?: KeyGetter
     keyProperty: string
     combiner?: Reducer
-    transform?: (value: Value) => Value
   }
-) =>
-  new Transform({
-    objectMode: true,
-    transform(data, _, callback) {
-      const output: Value[] = []
-      const running = mapper.map(args?.getInputKey?.(data) ?? '', data, {
-        configuration: args.configuration,
-        write: (key: Key, value: any) =>
-          output.push(
-            mappedObject(key, value, {
-              keyProperty: mapper.keyProperty ?? args.keyProperty,
-              transform: args.transform,
-            })
-          ),
-      })
-      handleAsyncFunctionCallback(running, () => {
-        new Promise<void>(async (resolve, _reject) => {
-          // sort output and combine equivalent/adjacent
-          for (const out of output) {
-            const combinerOutput: Value[] = []
-            const combineKey = out[args.keyProperty]
-            const current = (await leveldb.get(combineKey)) || []
-            current.push(out)
-            if (current.length > 1 && args.combiner) {
-              const combinerRunning = args.combiner.reduce(combineKey, current, {
-                configuration: args.configuration,
-                write: (key: Key, value: any) => {
-                  if (key !== combineKey) throw new Error(`Combiner can't change key`)
-                  combinerOutput.push(value)
-                },
-              })
-              if ((combinerRunning as any).then) await combinerRunning
-            }
-            await leveldb.put(combineKey, args.combiner ? combinerOutput : current)
-          }
-          resolve()
-        })
-          .then(() => callback())
-          .catch((err) => callback(err))
-      })
-    },
-  })
+) {
+  const combinerOutput: Value[] = []
+  const combineKey = out[args.keyProperty]
+  const leveldbKey =
+    typeof combineKey === 'number' ? formatNumberForUtf8Sort(combineKey) : combineKey
+  let current = []
+  try {
+    current = (await leveldb.get(leveldbKey)) || []
+  } catch (_err) {
+    /* */
+  }
+  current.push(out)
+  if (current.length > 1 && args.combiner) {
+    const combinerRunning = args.combiner.reduce(combineKey, current, {
+      configuration: args.configuration,
+      write: (key: Key, value: any) => {
+        if (key !== combineKey) throw new Error(`Combiner can't change key`)
+        combinerOutput.push(value)
+      },
+    })
+    if ((combinerRunning as any).then) await combinerRunning
+  }
+  await leveldb.put(leveldbKey, args.combiner ? combinerOutput : current)
+}
+
+export function streamFromCombinedLevelDb(leveldb: level.LevelDB | LevelUp) {
+  const iterator = levelIteratorStream(leveldb.iterator())
+  return StreamTree.readable(iterator).pipe(
+    new Transform({
+      objectMode: true,
+      transform(data, _, callback) {
+        for (const item of data.value) this.push(item)
+        callback()
+      },
+    })
+  )
+}
+
+// maxIntegerDigits == '9007199254740991'.length == 16
+export const maxIntegerDigits = Number.MAX_SAFE_INTEGER.toString().length
+
+export const formatNumberForUtf8Sort = (value: number, reverse?: boolean) =>
+  (reverse ? Number.MAX_SAFE_INTEGER - value : value).toString().padStart(maxIntegerDigits, '0')

@@ -44,25 +44,31 @@ export enum MapperImplementation {
 }
 
 export interface MapReduceJobConfig {
+  autoSkipMapper?: boolean
+  autoSkipReducer?: boolean
+  cleanup?: boolean
+  combinerClass?: ReducerClass
   configuration?: Configuration
   fileSystem: FileSystem
   jobid?: string
-  inputPaths: string[]
   inputFormat?: DatabaseCopyFormat
-  inputSource?: DatabaseCopySource
   inputKeyGetter?: KeyGetter
+  inputPaths: string[]
   inputShardFilter?: (index: number) => boolean
+  inputSource?: DatabaseCopySource
+  localDirectory?: string
   logger?: Logger
-  outputPath: string
+  mapperClass?: MapperClass
+  mapperImplementation?: MapperImplementation
   outputFormat?: DatabaseCopyFormat
-  outputTarget?: DatabaseCopyTarget
+  outputPath: string
   outputShards?: number
   outputShardFilter?: (index: number) => boolean
-  mapperClass: MapperClass
-  mapperImplementation?: MapperImplementation
-  reducerClass: ReducerClass
-  combinerClass?: ReducerClass
-  localDirectory?: string
+  outputTarget?: DatabaseCopyTarget
+  reducerClass?: ReducerClass
+  runMapper?: boolean
+  runReducer?: boolean
   shuffleDirectory?: string
-  cleanup?: boolean
+  skipMapper?: boolean
+  skipReducer?: boolean
 }

@@ -84,6 +84,14 @@ async function main() {
       description: 'Reducer name',
       type: 'string',
     },
+    runMapper: {
+      description: 'Run mapper',
+      type: 'booleaan',
+    },
+    runReducer: {
+      description: 'Run reducer',
+      type: 'booleaan',
+    },
     shuffleDirectory: {
       description: 'Shuffle directory',
       type: 'string',
