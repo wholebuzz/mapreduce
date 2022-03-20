@@ -1,5 +1,10 @@
+import { writeJSON } from '@wholebuzz/fs/lib/json'
 import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
-import { readShardFilenames, shardedFilename } from '@wholebuzz/fs/lib/util'
+import {
+  readShardFilenames,
+  shardedFilename,
+  waitForCompleteShardedInput,
+} from '@wholebuzz/fs/lib/util'
 import { DatabaseCopyOptions, dbcp } from 'dbcp'
 import { updateObjectProperties } from 'dbcp/dist/util'
 import { Transform } from 'stream'
@@ -20,6 +25,8 @@ export const defaultKeyProperty = '_key'
 export const defaultShuffleFormat = 'jsonl.gz'
 export const shuffleFilenameFormat = 'shuffle-SSSS-of-NNNN'
 export const inputshardFilenameFormat = 'inputshard-SSSS-of-NNNN'
+export const synchronizeMapFilenameFormat = 'map-done-SSSS-of-NNNN.json'
+export const synchronizeReduceFilenameFormat = 'reduce-done-SSSS-of-NNNN.json'
 export const localTempDirectoryPrefix = 'maptmp'
 export const defaultDiretory = './'
 
@@ -45,6 +52,13 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
   if (args.logger) {
     args.logger.info(`mapReduce configuration ${JSON.stringify(args.configuration ?? {})}`)
+  }
+  if (
+    args.synchronizeMap === undefined &&
+    !shuffleDirectory.startsWith('s3://') &&
+    !shuffleDirectory.startsWith('gs://')
+  ) {
+    args.synchronizeMap = true
   }
 
   // Find source shards and prepare temp directories
@@ -98,6 +112,13 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (mapper.cleanup) {
       await mapper.cleanup(immutableContext(args.configuration))
     }
+    if (args.synchronizeMap) {
+      const filename = shardedFilename(shuffleDirectory + synchronizeMapFilenameFormat, shard)
+      await writeJSON(args.fileSystem, filename, {
+        success: true,
+      })
+      args.logger?.info(`Synchronize Mapper wrote ${filename}`)
+    }
   }
 
   // reduce phase
@@ -120,6 +141,15 @@ export async function mapReduce(args: MapReduceJobConfig) {
       ],
       targetFile: shardedFilename(args.outputPath, shard),
     }
+    await waitForCompleteShardedInput(
+      args.fileSystem,
+      args.synchronizeMap
+        ? shuffleDirectory + synchronizeMapFilenameFormat
+        : options.sourceFiles[0].url,
+      {
+        shards: sourceShards,
+      }
+    )
     if (!args.reducerClass) throw new Error('No reducer')
     const reducer = factoryConstruct(args.reducerClass)
     if (reducer.configure) reducer.configure(args)
@@ -130,26 +160,27 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (reducer.cleanup) {
       await reducer.cleanup(immutableContext(args.configuration))
     }
+    if (args.synchronizeReduce) {
+      const filename = shardedFilename(shuffleDirectory + synchronizeReduceFilenameFormat, shard)
+      await writeJSON(args.fileSystem, filename, {
+        success: true,
+      })
+      args.logger?.info(`Synchronize Reducer wrote ${filename}`)
+    }
   }
 
   // cleanup phase
   if (args.cleanup !== false) {
-    for (let targetShard = 0; targetShard < targetShards; targetShard++) {
-      if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
-      for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
-        if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
-        await args.fileSystem.removeFile(
-          shuffleDirectory +
-            shardedFilename(shuffleFilenameFormat, { index: targetShard, modulus: targetShards }) +
-            '.' +
-            shardedFilename(inputshardFilenameFormat, {
-              index: sourceShard,
-              modulus: sourceShards,
-            }) +
-            `.${shuffleFormat}`
-        )
-      }
+    if (args.synchronizeCleanup && args.synchronizeReduce) {
+      await waitForCompleteShardedInput(
+        args.fileSystem,
+        shuffleDirectory + synchronizeReduceFilenameFormat,
+        {
+          shards: targetShards,
+        }
+      )
     }
+    await runCleanupPhase(shuffleDirectory, shuffleFormat, sourceShards, targetShards, args)
   }
 }
 
@@ -287,4 +318,43 @@ export async function runMapPhaseWithExternalSorting(
         }),
     })),
   })
+}
+
+export async function runCleanupPhase(
+  shuffleDirectory: string,
+  shuffleFormat: string,
+  sourceShards: number,
+  targetShards: number,
+  args: MapReduceJobConfig
+) {
+  for (let targetShard = 0; targetShard < targetShards; targetShard++) {
+    if (args.outputShardFilter && !args.outputShardFilter(targetShard)) continue
+    const shard = { index: targetShard, modulus: targetShards }
+    for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
+      await args.fileSystem.removeFile(
+        shuffleDirectory +
+          shardedFilename(shuffleFilenameFormat, shard) +
+          '.' +
+          shardedFilename(inputshardFilenameFormat, {
+            index: sourceShard,
+            modulus: sourceShards,
+          }) +
+          `.${shuffleFormat}`
+      )
+    }
+    if (args.synchronizeReduce) {
+      await args.fileSystem.removeFile(
+        shardedFilename(shuffleDirectory + synchronizeReduceFilenameFormat, shard)
+      )
+    }
+  }
+  if (args.synchronizeMap) {
+    for (let sourceShard = 0; sourceShard < sourceShards; sourceShard++) {
+      if (args.inputShardFilter && !args.inputShardFilter(sourceShard)) continue
+      const shard = { index: sourceShard, modulus: sourceShards }
+      await args.fileSystem.removeFile(
+        shardedFilename(shuffleDirectory + synchronizeMapFilenameFormat, shard)
+      )
+    }
+  }
 }

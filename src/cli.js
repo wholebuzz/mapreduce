@@ -96,6 +96,14 @@ async function main() {
       description: 'Shuffle directory',
       type: 'string',
     },
+    synchronizeMap: {
+      description: 'Write metadata files to synchronize multiple Mappers',
+      type: 'boolean',
+    },
+    synchronizeReduce: {
+      description: 'Write metadata files to synchronize multiple Reducers',
+      type: 'boolean',
+    },
     workerIndex: {
       default: 0,
       description: 'Our worker index',

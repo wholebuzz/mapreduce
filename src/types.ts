@@ -71,4 +71,7 @@ export interface MapReduceJobConfig {
   shuffleDirectory?: string
   skipMapper?: boolean
   skipReducer?: boolean
+  synchronizeCleanup?: boolean
+  synchronizeMap?: boolean
+  synchronizeReduce?: boolean
 }
