@@ -74,8 +74,8 @@ async function testSortByGuid(options: Partial<MapReduceJobConfig>) {
     let lastKey = ''
     await dbcp({
       fileSystem,
-      sourceFiles: [{ url: shardedFilename(targetShardedNDJsonUrl, shard) }],
-      targetStream: [openNullWritable()],
+      inputFiles: [{ url: shardedFilename(targetShardedNDJsonUrl, shard) }],
+      outputStream: [openNullWritable()],
       transformObject: (input) => {
         const x = input as Record<string, any>
         const key = x[keyProperty]

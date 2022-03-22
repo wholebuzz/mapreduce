@@ -36,14 +36,60 @@ async function main() {
     inputFormat: {
       choices: formats,
     },
+    inputHost: {
+      description: 'Input host',
+      type: 'string',
+    },
     inputKey: {
       description: 'Source file',
+      type: 'string',
+    },
+    inputName: {
+      description: 'Input database',
+      type: 'string',
+    },
+    inputPassword: {
+      description: 'Input database password',
       type: 'string',
     },
     inputPaths: {
       description: 'Source file',
       required: true,
       type: 'array',
+    },
+    inputPort: {
+      description: 'Input database port',
+      type: 'string',
+    },
+    inputShardBy: {
+      description: 'Shard input by property',
+      type: 'string',
+    },
+    inputShardFunction: {
+      description: 'Input shard function',
+      choices: ['number', 'string'],
+      type: 'string',
+    },
+    inputShardIndex: {
+      description: 'Input shard index',
+      type: 'number',
+    },
+    inputShards: {
+      description: 'Input shards',
+      type: 'number',
+    },
+    inputTable: {
+      description: 'Input database table',
+      type: 'string',
+    },
+    inputType: {
+      choices: Object.values(DatabaseCopyInputType),
+      description: 'Input database type',
+      type: 'string',
+    },
+    inputUser: {
+      description: 'Input database user',
+      type: 'string',
     },
     localDirectory: {
       description: 'Local directory',
@@ -67,14 +113,43 @@ async function main() {
     outputFormat: {
       choices: formats,
     },
+    outputHost: {
+      description: 'Output host',
+      type: 'string',
+    },
+    outputName: {
+      description: 'Output database',
+      type: 'string',
+    },
+    outputPassword: {
+      description: 'Output database password',
+      type: 'string',
+    },
     outputPath: {
       description: 'Target file',
       required: true,
       type: 'string',
     },
+    outputPort: {
+      description: 'Output database port',
+      type: 'string',
+    },
     outputShards: {
-      description: 'Target shards',
+      description: 'Output shards',
       type: 'number',
+    },
+    outputTable: {
+      description: 'Output database table',
+      type: 'string',
+    },
+    outputType: {
+      choices: Object.values(DatabaseCopyOutputType),
+      description: 'Output database type',
+      type: 'string',
+    },
+    outputUser: {
+      description: 'Output database user',
+      type: 'string',
     },
     plugins: {
       description: 'Plugins file or directory',

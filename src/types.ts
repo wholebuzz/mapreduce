@@ -1,7 +1,6 @@
 import type { FileSystem } from '@wholebuzz/fs/lib/fs'
 import type { Logger } from '@wholebuzz/fs/lib/util'
-import type { DatabaseCopySource, DatabaseCopyTarget } from 'dbcp'
-import type { DatabaseCopyFormat } from 'dbcp/dist/format'
+import type { DatabaseCopyInput, DatabaseCopyOutput } from 'dbcp'
 import type { Factory } from './plugins'
 
 export type Key = string
@@ -43,7 +42,7 @@ export enum MapperImplementation {
   // memory = 'memory',
 }
 
-export interface MapReduceJobConfig {
+export interface MapReduceJobConfig extends DatabaseCopyInput, DatabaseCopyOutput {
   autoSkipMapper?: boolean
   autoSkipReducer?: boolean
   cleanup?: boolean
@@ -51,20 +50,16 @@ export interface MapReduceJobConfig {
   configuration?: Configuration
   fileSystem: FileSystem
   jobid?: string
-  inputFormat?: DatabaseCopyFormat
   inputKeyGetter?: KeyGetter
   inputPaths: string[]
   inputShardFilter?: (index: number) => boolean
-  inputSource?: DatabaseCopySource
+  inputOptions?: DatabaseCopyInput
   localDirectory?: string
   logger?: Logger
   mapperClass?: MapperClass
   mapperImplementation?: MapperImplementation
-  outputFormat?: DatabaseCopyFormat
   outputPath: string
-  outputShards?: number
   outputShardFilter?: (index: number) => boolean
-  outputTarget?: DatabaseCopyTarget
   reducerClass?: ReducerClass
   runMapper?: boolean
   runReducer?: boolean

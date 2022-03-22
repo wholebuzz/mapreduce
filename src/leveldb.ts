@@ -20,7 +20,7 @@ export async function runMapPhaseWithLevelDb(
   options: DatabaseCopyOptions
 ) {
   const keyProperty = options.shardBy!
-  const targetFile = options.targetFile!
+  const outputFile = options.outputFile!
   const concurrency = 1
   const leveldbs = await pSettle(
     options.tempDirectories!.map((x) => () => openLevelDb({ file: x + 'mapreduce.level' })),
@@ -34,7 +34,7 @@ export async function runMapPhaseWithLevelDb(
     }
     options = {
       ...options,
-      targetFile: undefined,
+      outputFile: undefined,
       tempDirectories: undefined,
     }
     if (args.logger) {
@@ -45,7 +45,7 @@ export async function runMapPhaseWithLevelDb(
     await dbcp({
       ...options,
       fileSystem: args.fileSystem,
-      sourceFiles: updateObjectProperties(options.sourceFiles, (x) => ({
+      inputFiles: updateObjectProperties(options.inputFiles, (x) => ({
         ...x,
         transformInputObjectStream: () =>
           mapTransform(mapper, {
@@ -54,8 +54,8 @@ export async function runMapPhaseWithLevelDb(
             getInputKey: args.inputKeyGetter ?? ((v) => v[keyProperty]),
           }),
       })),
-      targetFormat: DatabaseCopyFormat.object,
-      targetStream: dbs.map((db) =>
+      outputFormat: DatabaseCopyFormat.object,
+      outputStream: dbs.map((db) =>
         StreamTree.writable(
           streamAsyncFilter(async (item: any) =>
             combineWithLevelDb(item, db.db, {
@@ -73,10 +73,10 @@ export async function runMapPhaseWithLevelDb(
         (db, index) => () =>
           dbcp({
             fileSystem: args.fileSystem,
-            sourceStream: streamFromCombinedLevelDb(db.db),
-            targetFile: shardedFilename(targetFile, {
+            inputStream: streamFromCombinedLevelDb(db.db),
+            outputFile: shardedFilename(outputFile, {
               index,
-              modulus: options.targetShards!,
+              modulus: options.outputShards!,
             }),
           })
       ),
