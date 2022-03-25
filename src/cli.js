@@ -11,8 +11,8 @@ const {
 const { logger } = require('@wholebuzz/fs/lib/util')
 const {
   DatabaseCopyFormat,
-  DatabaseCopySourceType,
-  DatabaseCopyTargetType,
+  DatabaseCopyInputType,
+  DatabaseCopyOutputType,
   DatabaseCopySchema,
 } = require('dbcp/dist/format')
 const dotenv = require('dotenv')
@@ -41,7 +41,7 @@ async function main() {
       type: 'string',
     },
     inputKey: {
-      description: 'Source file',
+      description: 'Input file',
       type: 'string',
     },
     inputName: {
@@ -53,7 +53,7 @@ async function main() {
       type: 'string',
     },
     inputPaths: {
-      description: 'Source file',
+      description: 'Input file',
       required: true,
       type: 'array',
     },
@@ -66,8 +66,8 @@ async function main() {
       type: 'string',
     },
     inputShardFunction: {
-      description: 'Input shard function',
       choices: ['number', 'string'],
+      description: 'Input shard function',
       type: 'string',
     },
     inputShardIndex: {
@@ -126,7 +126,7 @@ async function main() {
       type: 'string',
     },
     outputPath: {
-      description: 'Target file',
+      description: 'Output file',
       required: true,
       type: 'string',
     },
