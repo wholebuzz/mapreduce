@@ -66,7 +66,6 @@ export interface MapReduceJobConfig extends DatabaseCopyInput, DatabaseCopyOutpu
   shuffleDirectory?: string
   skipMapper?: boolean
   skipReducer?: boolean
-  synchronizeCleanup?: boolean
   synchronizeMap?: boolean
   synchronizeReduce?: boolean
 }

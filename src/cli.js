@@ -17,7 +17,7 @@ const {
 } = require('dbcp/dist/format')
 const dotenv = require('dotenv')
 const yargs = require('yargs')
-const { mapReduce } = require('./mapreduce')
+const { getShardFilter, mapReduce } = require('./mapreduce')
 const { loadPlugin, loadPluginFiles, parseConfiguration } = require('./plugins')
 const { MapperImplementation } = require('./types')
 
@@ -89,6 +89,10 @@ async function main() {
     },
     inputUser: {
       description: 'Input database user',
+      type: 'string',
+    },
+    jobid: {
+      description: 'Job-id for parallel worker synchronization',
       type: 'string',
     },
     localDirectory: {
@@ -210,9 +214,7 @@ async function main() {
     throw new Error(`Unknown mapper: ${args.reduce}`)
   }
 
-  const shardFilter =
-    args.numWorkers > 1 ? (index) => index % args.numWorkers === args.workedIndex : undefined
-
+  const shardFilter = getShardFilter(args.workerIndex, args.numWorkers)
   const options = {
     ...args,
     configuration: parseConfiguration(args.config),

@@ -34,15 +34,12 @@ export const defaultDiretory = './'
 export async function mapReduce(args: MapReduceJobConfig) {
   const keyProperty = args.configuration?.keyProperty || defaultKeyProperty
   const shuffleFormat = defaultShuffleFormat
-  const user = args.configuration?.user || process.env.USER || 'mr-user'
-  const jobid = args.jobid || (args.configuration?.name || 'mr-job') + `-${new Date().getTime()}`
-  const subdir = `taskTracker/${user}/jobcache/${jobid}/work/`
+  const user = getUser(args.configuration?.user)
+  const jobid = args.jobid || newJobId(args.configuration?.name)
+  const subdir = getWorkDirectory(user, jobid)
   const localDirectory = (args.localDirectory ?? defaultDiretory) + subdir
   const shuffleDirectory = (args.shuffleDirectory ?? defaultDiretory) + subdir
   const outputShards = args.outputShards || 1
-  const localDirectories = new Array(outputShards)
-    .fill(localDirectory)
-    .map((x, i) => x + `${localTempDirectoryPrefix}${i}/`)
   const runMapPhase = getMapperImplementation(args.mapperImplementation, !!args.combinerClass)
 
   // Validate input
@@ -54,18 +51,19 @@ export async function mapReduce(args: MapReduceJobConfig) {
   if (args.logger) {
     args.logger.info(`mapReduce configuration ${JSON.stringify(args.configuration ?? {})}`)
   }
+
   // Since local file show partial writes they need extra synchronization
-  if (
-    args.synchronizeMap === undefined &&
-    !shuffleDirectory.startsWith('s3://') &&
-    !shuffleDirectory.startsWith('gs://')
-  ) {
+  const isCloudStorageUrl =
+    shuffleDirectory.startsWith('s3://') || shuffleDirectory.startsWith('gs://')
+  if (args.synchronizeMap === undefined && !isCloudStorageUrl) {
     args.synchronizeMap = true
   }
+  if (args.synchronizeReduce === undefined && !isCloudStorageUrl) {
+    args.synchronizeReduce = true
+  }
 
-  // Find input shards and prepare temp directories
+  // Find input shards
   const inputShards = (await readShardFilenames(args.fileSystem, args.inputPaths[0])).numShards
-  for (const directory of localDirectories) await args.fileSystem.ensureDirectory(directory)
 
   // map phase
   let skippedMapper = !!args.skipMapper
@@ -74,6 +72,9 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (args.inputShardFilter && !args.inputShardFilter(inputShard)) continue
     const shard = { index: inputShard, modulus: inputShards }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
+    const localDirectories = new Array(outputShards)
+      .fill(localDirectory)
+      .map((x, i) => x + `${localTempDirectoryPrefix}-input${inputShard}-output${i}/`)
     const options: DatabaseCopyOptions = {
       ...assignDatabaseCopyOutputProperties(args, undefined),
       shardBy: keyProperty,
@@ -88,6 +89,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
       outputShards,
       tempDirectories: localDirectories,
     }
+
     if (!args.mapperClass) throw new Error('No mapper')
     const mapper = factoryConstruct(args.mapperClass)
     if (getObjectClassName(mapper) === 'IdentityMapper' && inputShards === outputShards) {
@@ -103,12 +105,19 @@ export async function mapReduce(args: MapReduceJobConfig) {
     if (mapper.setup) {
       await mapper.setup(immutableContext(args.configuration))
     }
+
     const combiner = args.combinerClass ? factoryConstruct(args.combinerClass) : undefined
     if (combiner?.configure) combiner.configure(args)
     if (combiner?.setup) {
       await combiner?.setup(immutableContext(args.configuration))
     }
+
+    for (const directory of localDirectories) await args.fileSystem.ensureDirectory(directory)
     await runMapPhase(mapper, combiner, args, options)
+    for (const directory of localDirectories) {
+      await args.fileSystem.removeDirectory(directory, { recursive: true })
+    }
+
     if (combiner?.cleanup) {
       await combiner.cleanup(immutableContext(args.configuration))
     }
@@ -144,15 +153,16 @@ export async function mapReduce(args: MapReduceJobConfig) {
       ],
       outputFile: shardedFilename(args.outputPath, shard),
     }
-    await waitForCompleteShardedInput(
-      args.fileSystem,
-      args.synchronizeMap
-        ? shuffleDirectory + synchronizeMapFilenameFormat
-        : options.inputFiles[0].url,
-      {
-        shards: inputShards,
-      }
-    )
+
+    const waitForUrl = args.synchronizeMap
+      ? shuffleDirectory + synchronizeMapFilenameFormat
+      : options.inputFiles[0].url
+    console.log(`Wait for ${waitForUrl}@${inputShards}`)
+    await waitForCompleteShardedInput(args.fileSystem, waitForUrl, {
+      shards: inputShards,
+    })
+    console.log(`Found ${waitForUrl}`)
+
     if (!args.reducerClass) throw new Error('No reducer')
     const reducer = factoryConstruct(args.reducerClass)
     if (reducer.configure) reducer.configure(args)
@@ -174,15 +184,6 @@ export async function mapReduce(args: MapReduceJobConfig) {
 
   // cleanup phase
   if (args.cleanup !== false) {
-    if (args.synchronizeCleanup && args.synchronizeReduce) {
-      await waitForCompleteShardedInput(
-        args.fileSystem,
-        shuffleDirectory + synchronizeReduceFilenameFormat,
-        {
-          shards: outputShards,
-        }
-      )
-    }
     await runCleanupPhase(shuffleDirectory, shuffleFormat, inputShards, outputShards, args)
   }
 }
@@ -345,19 +346,47 @@ export async function runCleanupPhase(
           `.${shuffleFormat}`
       )
     }
+  }
+
+  if (!args.outputShardFilter || args.outputShardFilter(0)) {
     if (args.synchronizeReduce) {
-      await args.fileSystem.removeFile(
-        shardedFilename(shuffleDirectory + synchronizeReduceFilenameFormat, shard)
+      await waitForCompleteShardedInput(
+        args.fileSystem,
+        shuffleDirectory + synchronizeReduceFilenameFormat,
+        {
+          shards: outputShards,
+        }
       )
+      for (let inputShard = 0; inputShard < inputShards; inputShard++) {
+        const shard = { index: inputShard, modulus: inputShards }
+        await args.fileSystem.removeFile(
+          shardedFilename(shuffleDirectory + synchronizeMapFilenameFormat, shard)
+        )
+      }
+    }
+    if (args.synchronizeMap) {
+      for (let outputShard = 0; outputShard < outputShards; outputShard++) {
+        const shard = { index: outputShard, modulus: outputShards }
+        await args.fileSystem.removeFile(
+          shardedFilename(shuffleDirectory + synchronizeReduceFilenameFormat, shard)
+        )
+      }
     }
   }
-  if (args.synchronizeMap) {
-    for (let inputShard = 0; inputShard < inputShards; inputShard++) {
-      if (args.inputShardFilter && !args.inputShardFilter(inputShard)) continue
-      const shard = { index: inputShard, modulus: inputShards }
-      await args.fileSystem.removeFile(
-        shardedFilename(shuffleDirectory + synchronizeMapFilenameFormat, shard)
-      )
-    }
-  }
+}
+
+export function newJobId(name?: string) {
+  return (name || 'mr-job') + `-${new Date().getTime()}`
+}
+
+export function getUser(user?: string) {
+  return user || process.env.USER || 'mr-user'
+}
+
+export function getWorkDirectory(user: string, jobid: string) {
+  return `taskTracker/${user}/jobcache/${jobid}/work/`
+}
+
+export function getShardFilter(workerIndex: number, numWorkers: number) {
+  return numWorkers > 1 ? (index: number) => index % numWorkers === workerIndex : undefined
 }

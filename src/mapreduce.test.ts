@@ -8,9 +8,13 @@ import { S3FileSystem } from '@wholebuzz/fs/lib/s3'
 import { openNullWritable } from '@wholebuzz/fs/lib/stream'
 import { logger, shardedFilename, shardedFilenames } from '@wholebuzz/fs/lib/util'
 import { dbcp, getShardFunction } from 'dbcp'
-import { expectCreateFilesWithHashes, expectCreateFileWithHash } from 'dbcp/dist/test.fixture'
+import {
+  execCommand,
+  expectCreateFilesWithHashes,
+  expectCreateFileWithHash,
+} from 'dbcp/dist/test.fixture'
 import { SetKeyMapper } from './mappers'
-import { mapReduce } from './mapreduce'
+import { getShardFilter, mapReduce, newJobId } from './mapreduce'
 import { DeleteKeyReducer, IdentityReducer } from './reducers'
 import { MapperImplementation, MapReduceJobConfig } from './types'
 
@@ -21,38 +25,45 @@ const fileSystem = new AnyFileSystem([
 ])
 
 const testJsonUrl = './test/test-SSSS-of-NNNN.json.gz'
-const targetShardedNDJsonUrl = '/tmp/mapreduce-test-target-SSSS-of-NNNN.json.gz'
-const targetShardedNumShards = 8
 const targetNDJsonUrl = '/tmp/mapreduce-test-final.jsonl.gz'
 const targetNDJsonHash = 'abb7fe0435d553c375c28e52aee28bdb'
+const targetShardedNumShards = 8
+const targetShardedNDJsonUrl = '/tmp/mapreduce-test-target-SSSS-of-NNNN.json.gz'
+const targetShardedNDHash = [
+  '8c41a90b16f51c9e98d4477c5ffbd4c8',
+  '87e68e628ff39ab62bf55f179d584420',
+  '45441d7e7da8823aa1f7eb828fd6e956',
+  '7ce11a1993f820c994cef7d2090a9056',
+  '1de48ba808a6c5fb9579f73d667614c2',
+  'c6392b80d6cf97b988c026895f982015',
+  'e9aaba3d14eb0fd64a8a51b1995bb682',
+  '1806f58cf21c155e5e6dd8d9ab5a1a07',
+]
 
 describe('With MapperImplementation.externalSorting', () => {
   const mapperImplementation = MapperImplementation.externalSorting
-  it('Should sort by guid', () => testSortByGuid({ mapperImplementation }))
-  it('Should sort by id', () => testSortById({ mapperImplementation }))
+  it('Should sort by guid', () => testMapReduceSortByGuid({ mapperImplementation }))
+  it('Should sort by id', () => testMapReduceSortById({ mapperImplementation }))
 })
 
 describe('With MapperImplementation.leveldb', () => {
   const mapperImplementation = MapperImplementation.leveldb
-  it('Should sort by guid', () => testSortByGuid({ mapperImplementation }))
-  it('Should sort by id', () => testSortById({ mapperImplementation }))
+  it('Should sort by guid', () => testMapReduceSortByGuid({ mapperImplementation }))
+  it('Should sort by id', () => testMapReduceSortById({ mapperImplementation }))
 })
 
-async function testSortByGuid(options: Partial<MapReduceJobConfig>) {
+describe('With separately executed workers', () => {
+  const mapperImplementation = MapperImplementation.externalSorting
+  it('Should sort by guid', () => testExecMapReduceSortByGuid({ mapperImplementation }))
+  it('Should sort by id', () => testExecMapReduceSortById({ mapperImplementation }))
+})
+
+async function testMapReduceSortByGuid(options: Partial<MapReduceJobConfig>) {
   const keyProperty = 'guid'
   await expectCreateFilesWithHashes(
     fileSystem,
     shardedFilenames(targetShardedNDJsonUrl, targetShardedNumShards),
-    [
-      '8c41a90b16f51c9e98d4477c5ffbd4c8',
-      '87e68e628ff39ab62bf55f179d584420',
-      '45441d7e7da8823aa1f7eb828fd6e956',
-      '7ce11a1993f820c994cef7d2090a9056',
-      '1de48ba808a6c5fb9579f73d667614c2',
-      'c6392b80d6cf97b988c026895f982015',
-      'e9aaba3d14eb0fd64a8a51b1995bb682',
-      '1806f58cf21c155e5e6dd8d9ab5a1a07',
-    ],
+    targetShardedNDHash,
     () =>
       mapReduce({
         configuration: { setKey: keyProperty },
@@ -66,31 +77,10 @@ async function testSortByGuid(options: Partial<MapReduceJobConfig>) {
         ...options,
       })
   )
-  const shardFunction = getShardFunction({ shardBy: keyProperty })
-  let total = 0
-  for (let i = 0; i < targetShardedNumShards; i++) {
-    const shard = { index: i, modulus: targetShardedNumShards }
-    let shardTotal = 0
-    let lastKey = ''
-    await dbcp({
-      fileSystem,
-      inputFiles: [{ url: shardedFilename(targetShardedNDJsonUrl, shard) }],
-      outputStream: [openNullWritable()],
-      transformObject: (input) => {
-        const x = input as Record<string, any>
-        const key = x[keyProperty]
-        expect(shardFunction(x, targetShardedNumShards)).toBe(shard.index)
-        if (shardTotal > 0) expect(key < lastKey).toBe(false)
-        shardTotal++
-        lastKey = key
-      },
-    })
-    total += shardTotal
-  }
-  expect(total).toBe(10000)
+  await verifyShardedOutput(targetShardedNDJsonUrl, targetShardedNumShards, keyProperty)
 }
 
-async function testSortById(options: Partial<MapReduceJobConfig>) {
+async function testMapReduceSortById(options: Partial<MapReduceJobConfig>) {
   await expectCreateFileWithHash(fileSystem, targetNDJsonUrl, targetNDJsonHash, () =>
     mapReduce({
       configuration: { setKey: 'id' },
@@ -104,4 +94,106 @@ async function testSortById(options: Partial<MapReduceJobConfig>) {
       ...options,
     })
   )
+}
+
+async function testExecMapReduceSortByGuid(options: Partial<MapReduceJobConfig>) {
+  const keyProperty = 'guid'
+  await testExecMapReduce({
+    config: `-D setKey=${keyProperty}`,
+    inputPath: testJsonUrl,
+    keyProperty,
+    mapper: 'SetKeyMapper',
+    mapperImplementation: options.mapperImplementation,
+    outputHash: targetShardedNDHash,
+    outputPath: targetShardedNDJsonUrl,
+    outputShards: targetShardedNumShards,
+    reducer: 'IdentityReducer',
+  })
+}
+
+async function testExecMapReduceSortById(options: Partial<MapReduceJobConfig>) {
+  const keyProperty = 'id'
+  await testExecMapReduce({
+    config: `-D setKey=${keyProperty}`,
+    inputPath: targetShardedNDJsonUrl,
+    keyProperty,
+    mapper: 'SetKeyMapper',
+    mapperImplementation: options.mapperImplementation,
+    outputHash: [targetNDJsonHash],
+    outputPath: targetNDJsonUrl,
+    outputShards: 1,
+    reducer: 'DeleteKeyReducer',
+  })
+}
+
+async function testExecMapReduce(options: {
+  config?: string
+  inputPath: string
+  keyProperty: string
+  mapper: string
+  mapperImplementation?: MapperImplementation
+  numWorkers?: number
+  outputHash: string[]
+  outputPath: string
+  outputShards: number
+  reducer: string
+}) {
+  const numWorkers = options.numWorkers || options.outputShards
+  const jobid = newJobId()
+  const args =
+    `--map ${options.mapper} --reduce ${options.reducer} ` +
+    `--jobid ${jobid} ` +
+    `--inputPaths ${options.inputPath} ` +
+    `--outputPath ${options.outputPath} ` +
+    `--outputShards ${options.outputShards} ` +
+    `--numWorkers ${numWorkers} ` +
+    (options.config ?? '')
+  await Promise.all(
+    new Array(options.outputShards).fill(undefined).map((_, i) =>
+      expectCreateFilesWithHashes(
+        fileSystem,
+        options.outputShards > 1
+          ? shardedFilenames(
+              options.outputPath,
+              options.outputShards,
+              getShardFilter(i, numWorkers)
+            )
+          : [options.outputPath],
+        options.outputShards > 1
+          ? options.outputHash.filter((__, j) => !!getShardFilter(i, numWorkers)?.(j))
+          : options.outputHash,
+        async () => {
+          const command = `yarn --silent start ${args} --workerIndex ${i}`
+          const output = await execCommand(command)
+          console.log('testSortByGuidWithExec execCommand', command, output)
+        }
+      )
+    )
+  )
+  await verifyShardedOutput(options.outputPath, options.outputShards, options.keyProperty)
+}
+
+async function verifyShardedOutput(url: string, numShards: number, keyProperty: string) {
+  const shardFunction = getShardFunction({ shardBy: keyProperty })
+  let total = 0
+  for (let i = 0; i < numShards; i++) {
+    const shard = { index: i, modulus: numShards }
+    let shardTotal = 0
+    let lastKey = ''
+    await dbcp({
+      fileSystem,
+      inputFiles: [{ url: shardedFilename(url, shard) }],
+      outputStream: [openNullWritable()],
+      transformObject: (input) => {
+        const x = input as Record<string, any>
+        const key = x[keyProperty]
+        expect(shardFunction(x, numShards)).toBe(shard.index)
+        if (shardTotal > 0) expect(key < lastKey).toBe(false)
+        shardTotal++
+        lastKey = key
+      },
+    })
+    total += shardTotal
+  }
+  expect(total).toBe(10000)
 }

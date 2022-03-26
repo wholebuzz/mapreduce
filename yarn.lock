@@ -1098,6 +1098,13 @@
     "@types/level-codec" "*"
     "@types/levelup" "*"
 
+"@types/through@^0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@types/through/-/through-0.0.30.tgz#e0e42ce77e897bd6aead6f6ea62aeb135b8a3895"
+  integrity sha512-FvnCJljyxhPM3gkRgWmxmDZyAQSiBQQWLI0A0VFL0K7W1oRUrPJSqNO0NvTnLkBcotdlp3lKvaT0JrnyRDkzOg==
+  dependencies:
+    "@types/node" "*"
+
 "@types/tunnel@^0.0.3":
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/@types/tunnel/-/tunnel-0.0.3.tgz#f109e730b072b3136347561fc558c9358bb8c6e9"
@@ -1130,13 +1137,15 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@wholebuzz/fs@^1.2.4":
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/@wholebuzz/fs/-/fs-1.2.4.tgz#84df55f735e12b63def83e2771d18c4c346432d1"
-  integrity sha512-WhJhD9zRklQtEH4X2p8t8Rn+pDRbTKVzElEe2fuaxkXFgdvlHQPXinSR3em01thwUYpe9ReluPtoRFNSdfIRJw==
+"@wholebuzz/fs@^1.2.5":
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/@wholebuzz/fs/-/fs-1.2.5.tgz#06adb27f90926145d2791e86c486f4c4175e8416"
+  integrity sha512-y/WT0nwqs/hkqMzfJAnyRjrU7hRmQ01wdJrLdTNXWZIhfi3vd4eLmcbZjzb3vzJhMjk0YCgGrZ4wpKAxHCW3ug==
   dependencies:
+    "@types/through" "^0.0.30"
     JSONStream "^1.3.5"
     ndjson "^2.0.0"
+    rimraf "^3.0.2"
     sha.js "^2.4.11"
     stream-json "^1.7.3"
     tree-stream "^1.1.1"
@@ -2058,17 +2067,17 @@ db-json-column@^0.0.3:
   resolved "https://registry.yarnpkg.com/db-json-column/-/db-json-column-0.0.3.tgz#b01153994da6712074d30d95f4f970946809a05d"
   integrity sha512-aEXyL6kZxVAJJ0jVmZNlAHIKnVTPgd976oLIOgFmfVGNdvn4q4zmpQrVp04lPlxT13ezeNc4zH1t0zUBcSiDeQ==
 
-dbcp@^1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.1.tgz#a7202e5bdcc147a4999aa4cee8f7d1f06caab145"
-  integrity sha512-NBYbS3I8v1sDVj/hOvKu7W4NA6QQV4by7X6hWiTodN36oT7Yl4rJlSPV0sk4BicHyJeEY0k5K2KZGtio2BTTYg==
+dbcp@^1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.2.tgz#2376047f01cf42bd827f05df9acc00ccc0ea70ff"
+  integrity sha512-RjROGNJ46NRpJ1a7k1G00vjw8dnzPf3ioDdhrdH5QcaX201adZDVoBsx06xfmLpAI621CE52M3hsisOEDRmbBA==
   dependencies:
     "@azure/identity" "^2.0.0"
     "@azure/storage-blob" "^12.8.0"
     "@elastic/elasticsearch" "^7.15.0"
     "@google-cloud/storage" "^5.8.1"
     "@marsaud/smb2" "^0.18.0"
-    "@wholebuzz/fs" "^1.2.4"
+    "@wholebuzz/fs" "^1.2.5"
     athena-express "^7.1.3"
     aws-sdk "^2.975.0"
     axios "^0.20.0"
@@ -2095,7 +2104,6 @@ dbcp@^1.4.1:
     pg "^8.2.0"
     pg-query-stream "^3.1.1"
     progress-stream "^2.0.0"
-    rimraf "^3.0.2"
     s3-stream-upload "^2.0.2"
     subleveldown "^5.0.1"
     tedious "^14.0.0"
