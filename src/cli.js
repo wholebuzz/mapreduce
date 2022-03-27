@@ -41,7 +41,7 @@ async function main() {
       type: 'string',
     },
     inputKey: {
-      description: 'Input file',
+      description: 'Input key field',
       type: 'string',
     },
     inputName: {
@@ -183,6 +183,11 @@ async function main() {
       description: 'Write metadata files to synchronize multiple Reducers',
       type: 'boolean',
     },
+    verbose: {
+      alias: 'v',
+      description: 'Verbose',
+      type: 'boolean',
+    },
     workerIndex: {
       default: 0,
       description: 'Our worker index',
@@ -232,6 +237,8 @@ async function main() {
   } catch (err) {
     // tslint:disable-next-line:no-console
     console.log(err.message)
+    // tslint:disable-next-line:no-console
+    if (args.verbose) { console.error(err) }
     process.exit(-1)
   }
 

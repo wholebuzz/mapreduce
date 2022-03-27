@@ -2067,10 +2067,10 @@ db-json-column@^0.0.3:
   resolved "https://registry.yarnpkg.com/db-json-column/-/db-json-column-0.0.3.tgz#b01153994da6712074d30d95f4f970946809a05d"
   integrity sha512-aEXyL6kZxVAJJ0jVmZNlAHIKnVTPgd976oLIOgFmfVGNdvn4q4zmpQrVp04lPlxT13ezeNc4zH1t0zUBcSiDeQ==
 
-dbcp@^1.4.2:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.2.tgz#2376047f01cf42bd827f05df9acc00ccc0ea70ff"
-  integrity sha512-RjROGNJ46NRpJ1a7k1G00vjw8dnzPf3ioDdhrdH5QcaX201adZDVoBsx06xfmLpAI621CE52M3hsisOEDRmbBA==
+dbcp@^1.4.3:
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.3.tgz#0cf08b84c86c0128056bc6fb4491221fba368800"
+  integrity sha512-zokLeLeK4Y6gUvkC1wOOVqhbDXB33Fshfp7HndCam0nm/eLgDH4fGcQy3IE2A8gZRMPXnOO7EGaB182NyhlgXQ==
   dependencies:
     "@azure/identity" "^2.0.0"
     "@azure/storage-blob" "^12.8.0"
@@ -2104,6 +2104,7 @@ dbcp@^1.4.2:
     pg "^8.2.0"
     pg-query-stream "^3.1.1"
     progress-stream "^2.0.0"
+    readline-transform "^1.0.0"
     s3-stream-upload "^2.0.2"
     subleveldown "^5.0.1"
     tedious "^14.0.0"
@@ -5219,6 +5220,11 @@ readable-stream@3, readable-stream@^3.0.0, readable-stream@^3.0.6, readable-stre
     inherits "^2.0.3"
     string_decoder "^1.1.1"
     util-deprecate "^1.0.1"
+
+readline-transform@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/readline-transform/-/readline-transform-1.0.0.tgz#3157f97428acaec0f05a5c1ff2c3120f4e6d904b"
+  integrity sha512-7KA6+N9IGat52d83dvxnApAWN+MtVb1MiVuMR/cf1O4kYsJG+g/Aav0AHcHKsb6StinayfPLne0+fMX2sOzAKg==
 
 rechoir@0.7.0:
   version "0.7.0"

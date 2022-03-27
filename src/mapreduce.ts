@@ -1,6 +1,7 @@
 import { writeJSON } from '@wholebuzz/fs/lib/json'
 import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
 import {
+  isShardedFilename,
   readShardFilenames,
   shardedFilename,
   waitForCompleteShardedInput,
@@ -63,14 +64,24 @@ export async function mapReduce(args: MapReduceJobConfig) {
   }
 
   // Find input shards
-  const inputShards = (await readShardFilenames(args.fileSystem, args.inputPaths[0])).numShards
+  const inputShards: string[] = []
+  for (const path of args.inputPaths) {
+    if (isShardedFilename(path)) {
+      const numShards = (await readShardFilenames(args.fileSystem, path)).numShards
+      for (let i = 0; i < numShards; i++) {
+        inputShards.push(shardedFilename(args.inputPaths[0], { index: i, modulus: numShards }))
+      }
+    } else {
+      inputShards.push(path)
+    }
+  }
 
   // map phase
   let skippedMapper = !!args.skipMapper
   const runMapper = args.runMapper !== false && !skippedMapper
-  for (let inputShard = 0; runMapper && inputShard < inputShards; inputShard++) {
+  for (let inputShard = 0; runMapper && inputShard < inputShards.length; inputShard++) {
     if (args.inputShardFilter && !args.inputShardFilter(inputShard)) continue
-    const shard = { index: inputShard, modulus: inputShards }
+    const shard = { index: inputShard, modulus: inputShards.length }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
     const localDirectories = new Array(outputShards)
       .fill(localDirectory)
@@ -82,7 +93,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
         ? undefined
         : [
             {
-              url: shardedFilename(args.inputPaths[0], shard),
+              url: inputShards[inputShard],
             },
           ],
       outputFile: shuffleDirectory + `${shuffleFilenameFormat}.${inputshard}.${shuffleFormat}`,
@@ -92,7 +103,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
 
     if (!args.mapperClass) throw new Error('No mapper')
     const mapper = factoryConstruct(args.mapperClass)
-    if (getObjectClassName(mapper) === 'IdentityMapper' && inputShards === outputShards) {
+    if (getObjectClassName(mapper) === 'IdentityMapper' && inputShards.length === outputShards) {
       if (args.skipMapper || args.autoSkipMapper) {
         skippedMapper = true
         break
@@ -148,7 +159,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
             shuffleDirectory +
             shardedFilename(shuffleFilenameFormat, shard) +
             `.${inputshardFilenameFormat}.${shuffleFormat}`,
-          inputShards,
+          inputShards: inputShards.length,
         },
       ],
       outputFile: shardedFilename(args.outputPath, shard),
@@ -159,7 +170,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
       : options.inputFiles[0].url
     console.log(`Wait for ${waitForUrl}@${inputShards}`)
     await waitForCompleteShardedInput(args.fileSystem, waitForUrl, {
-      shards: inputShards,
+      shards: inputShards.length,
     })
     console.log(`Found ${waitForUrl}`)
 
@@ -184,7 +195,7 @@ export async function mapReduce(args: MapReduceJobConfig) {
 
   // cleanup phase
   if (args.cleanup !== false) {
-    await runCleanupPhase(shuffleDirectory, shuffleFormat, inputShards, outputShards, args)
+    await runCleanupPhase(shuffleDirectory, shuffleFormat, inputShards.length, outputShards, args)
   }
 }
 
@@ -252,17 +263,19 @@ export const reduceTransform = (
   new Transform({
     objectMode: true,
     transform(data, _, callback) {
-      const reduceKey = data[0].value[args.keyProperty]
+      const isArray = Array.isArray(data)
+      const reduceKey = isArray ? data[0].value[args.keyProperty] : data.value[args.keyProperty]
+      const context = {
+        configuration: args.configuration,
+        write: (key: Key, value: Value) => {
+          if (key !== reduceKey) throw new Error(`Reducer can't change key`)
+          this.push(value)
+        },
+      }
       const running = reducer.reduce(
         reduceKey,
-        data.map((x: { source: string; value: Record<string, any> }) => x.value),
-        {
-          configuration: args.configuration,
-          write: (key: Key, value: Value) => {
-            if (key !== reduceKey) throw new Error(`Reducer can't change key`)
-            this.push(value)
-          },
-        }
+        isArray ? data.map((x: { source: string; value: Record<string, any> }) => x.value) : [data],
+        context
       )
       handleAsyncFunctionCallback(running, callback)
     },
