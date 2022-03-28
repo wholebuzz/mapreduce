@@ -1,26 +1,26 @@
 import pSettle from 'p-settle'
-import type { Context, Key, Mapper, MapReduceJobConfig, Value } from './types'
+import type { Context, Item, Mapper, MapReduceJobConfig } from './types'
 
-export class IdentityMapper implements Mapper {
-  map(key: Key, value: Value, context: Context) {
+export class IdentityMapper<Key, Value> implements Mapper<Key, Value> {
+  map(key: Key, value: Value, context: Context<Key, Value>) {
     context.write(key, value)
   }
 }
 
-export class SetKeyMapper implements Mapper {
-  setKey: Key = ''
-
-  configure(args: MapReduceJobConfig) {
-    this.setKey = args.configuration?.setKey
+export class SetKeyMapper<Key, Value extends Item> implements Mapper<Key, Value> {
+  configure(args: MapReduceJobConfig<Key, Value>) {
+    const key: Key | undefined = undefined
+    console.log('SetKeyMapper ', typeof key)
+    if (!args.configuration?.setKey) throw new Error(`SetKeyMapper requires -D setKey=x`)
   }
 
-  map(_key: Key, value: Value, context: Context) {
-    context.write(value[this.setKey], value)
+  map(_key: Key, value: Value, context: Context<Key, Value>) {
+    context.write(value[context.configuration.setKey], value)
   }
 }
 
-export class IterableMapper {
-  map(key: Key, value: Value | Value[], context: Context) {
+export class IterableMapper<Key, Value> implements Mapper<Key, Value> {
+  map(key: Key, value: Value | Value[], context: Context<Key, Value>) {
     if (Array.isArray(value)) {
       for (const item of value) this.mapItem(key, item, context)
     } else {
@@ -28,15 +28,15 @@ export class IterableMapper {
     }
   }
 
-  mapItem(key: Key, value: Value, context: Context) {
+  mapItem(key: Key, value: Value, context: Context<Key, Value>) {
     context.write(key, value)
   }
 }
 
-export class AsyncIterableMapper {
+export class AsyncIterableMapper<Key, Value> implements Mapper<Key, Value> {
   concurrency = 1
 
-  async map(key: Key, value: Value | Value[], context: Context) {
+  async map(key: Key, value: Value | Value[], context: Context<Key, Value>) {
     if (Array.isArray(value)) {
       const res = await pSettle(
         value.map((item) => () => this.mapItem(key, item, context)),
@@ -50,7 +50,7 @@ export class AsyncIterableMapper {
     }
   }
 
-  async mapItem(key: Key, value: Value, context: Context) {
+  async mapItem(key: Key, value: Value, context: Context<Key, Value>) {
     context.write(key, value)
   }
 }

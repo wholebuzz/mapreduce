@@ -30,35 +30,43 @@ const targetNDJsonHash = 'abb7fe0435d553c375c28e52aee28bdb'
 const targetShardedNumShards = 8
 const targetShardedNDJsonUrl = '/tmp/mapreduce-test-target-SSSS-of-NNNN.json.gz'
 const targetShardedNDHash = [
-  '8c41a90b16f51c9e98d4477c5ffbd4c8',
-  '87e68e628ff39ab62bf55f179d584420',
-  '45441d7e7da8823aa1f7eb828fd6e956',
-  '7ce11a1993f820c994cef7d2090a9056',
-  '1de48ba808a6c5fb9579f73d667614c2',
-  'c6392b80d6cf97b988c026895f982015',
-  'e9aaba3d14eb0fd64a8a51b1995bb682',
-  '1806f58cf21c155e5e6dd8d9ab5a1a07',
+  'f70cf4e8fdd35b11cf298b6e8e9b2814',
+  '4655506e23184b95ffb62fa0e05d4ec4',
+  '68f9d42f8bef36cbcbea505b24464fc4',
+  '859eb819a370a166cb033b2f6ee6be46',
+  'e6b472439e2087496d40c742363f9189',
+  '168ea82cd5084867cb4f662795970878',
+  '274200fd873f4269e5fd1cdd6b1ada18',
+  'ba042850df6e7655bce4733e7b16b95a',
 ]
 
 describe('With MapperImplementation.externalSorting', () => {
   const mapperImplementation = MapperImplementation.externalSorting
-  it('Should sort by guid', () => testMapReduceSortByGuid({ mapperImplementation }))
-  it('Should sort by id', () => testMapReduceSortById({ mapperImplementation }))
+  describe('With single-thread', () => {
+    it('Should sort by guid', () => testMapReduceSortByGuid({ mapperImplementation }))
+    it('Should sort by id', () => testMapReduceSortById({ mapperImplementation }))
+  })
+  describe('With separately executed workers', () => {
+    it('Should sort by guid', () => testExecMapReduceSortByGuid({ mapperImplementation }))
+    it('Should sort by id', () => testExecMapReduceSortById({ mapperImplementation }))
+  })
 })
 
 describe('With MapperImplementation.leveldb', () => {
   const mapperImplementation = MapperImplementation.leveldb
-  it('Should sort by guid', () => testMapReduceSortByGuid({ mapperImplementation }))
-  it('Should sort by id', () => testMapReduceSortById({ mapperImplementation }))
+  describe('With single-thread', () => {
+    it('Should sort by guid', () => testMapReduceSortByGuid({ mapperImplementation }))
+    it('Should sort by id', () => testMapReduceSortById({ mapperImplementation }))
+  })
+  describe('With separately executed workers', () => {
+    it('Should sort by guid', () => testExecMapReduceSortByGuid({ mapperImplementation }))
+    it('Should sort by id', () => testExecMapReduceSortById({ mapperImplementation }))
+  })
 })
 
-describe('With separately executed workers', () => {
-  const mapperImplementation = MapperImplementation.externalSorting
-  it('Should sort by guid', () => testExecMapReduceSortByGuid({ mapperImplementation }))
-  it('Should sort by id', () => testExecMapReduceSortById({ mapperImplementation }))
-})
-
-async function testMapReduceSortByGuid(options: Partial<MapReduceJobConfig>) {
+async function testMapReduceSortByGuid<Key, Value>(
+  options: Partial<MapReduceJobConfig<Key, Value>>
+) {
   const keyProperty = 'guid'
   await expectCreateFilesWithHashes(
     fileSystem,
@@ -80,7 +88,7 @@ async function testMapReduceSortByGuid(options: Partial<MapReduceJobConfig>) {
   await verifyShardedOutput(targetShardedNDJsonUrl, targetShardedNumShards, keyProperty)
 }
 
-async function testMapReduceSortById(options: Partial<MapReduceJobConfig>) {
+async function testMapReduceSortById<Key, Value>(options: Partial<MapReduceJobConfig<Key, Value>>) {
   await expectCreateFileWithHash(fileSystem, targetNDJsonUrl, targetNDJsonHash, () =>
     mapReduce({
       configuration: { setKey: 'id' },
@@ -96,7 +104,9 @@ async function testMapReduceSortById(options: Partial<MapReduceJobConfig>) {
   )
 }
 
-async function testExecMapReduceSortByGuid(options: Partial<MapReduceJobConfig>) {
+async function testExecMapReduceSortByGuid<Key, Value>(
+  options: Partial<MapReduceJobConfig<Key, Value>>
+) {
   const keyProperty = 'guid'
   await testExecMapReduce({
     config: `-D setKey=${keyProperty}`,
@@ -111,7 +121,9 @@ async function testExecMapReduceSortByGuid(options: Partial<MapReduceJobConfig>)
   })
 }
 
-async function testExecMapReduceSortById(options: Partial<MapReduceJobConfig>) {
+async function testExecMapReduceSortById<Key, Value>(
+  options: Partial<MapReduceJobConfig<Key, Value>>
+) {
   const keyProperty = 'id'
   await testExecMapReduce({
     config: `-D setKey=${keyProperty}`,

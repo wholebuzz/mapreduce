@@ -40,10 +40,6 @@ async function main() {
       description: 'Input host',
       type: 'string',
     },
-    inputKey: {
-      description: 'Input key field',
-      type: 'string',
-    },
     inputName: {
       description: 'Input database',
       type: 'string',
@@ -224,7 +220,6 @@ async function main() {
     ...args,
     configuration: parseConfiguration(args.config),
     fileSystem,
-    inputKeyGetter: args.inputKey ? (x) => x[args.inputKey] : undefined,
     inputShardFilter: shardFilter,
     logger,
     mapperClass,

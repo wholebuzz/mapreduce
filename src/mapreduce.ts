@@ -14,25 +14,27 @@ import { runMapPhaseWithLevelDb } from './leveldb'
 import { factoryConstruct, getObjectClassName } from './plugins'
 import {
   Configuration,
-  Key,
-  KeyGetter,
+  Context,
+  Item,
+  MapContext,
   Mapper,
   MapperImplementation,
   MapReduceJobConfig,
+  ReduceContext,
   Reducer,
-  Value,
 } from './types'
 
-export const defaultKeyProperty = '_key'
+export const defaultDiretory = './'
+export const defaultKeyProperty = 'key'
+export const defaultValueProperty = 'value'
 export const defaultShuffleFormat = 'jsonl.gz'
 export const shuffleFilenameFormat = 'shuffle-SSSS-of-NNNN'
 export const inputshardFilenameFormat = 'inputshard-SSSS-of-NNNN'
 export const synchronizeMapFilenameFormat = 'map-done-SSSS-of-NNNN.json'
 export const synchronizeReduceFilenameFormat = 'reduce-done-SSSS-of-NNNN.json'
 export const localTempDirectoryPrefix = 'maptmp'
-export const defaultDiretory = './'
 
-export async function mapReduce(args: MapReduceJobConfig) {
+export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>) {
   const keyProperty = args.configuration?.keyProperty || defaultKeyProperty
   const shuffleFormat = defaultShuffleFormat
   const user = getUser(args.configuration?.user)
@@ -211,82 +213,101 @@ export function getMapperImplementation(type?: MapperImplementation, hasCombiner
 }
 
 export const immutableContext = (configuration?: Configuration) => ({
-  configuration,
+  configuration: configuration ?? {},
+  currentItem: {},
+  keyProperty: '',
+  valueProperty: '',
   write: () => {
     throw new Error()
   },
 })
 
-export function mappedObject(
+export function mappedObject<Key, Value>(
   key: Key,
   value: any,
-  args: {
-    keyProperty?: string
-    transform?: (value: Value) => Value
-  }
-): Value {
-  const output: Value = typeof value === 'object' ? { ...value } : { value }
-  if (args.keyProperty) output[args.keyProperty] = key
-  return args?.transform ? args.transform(output) : output
+  context: Context<Key, Value>,
+  transform?: (value: Item) => Item
+): Item {
+  const output: Item = typeof value === 'object' ? { ...value } : { [context.valueProperty]: value }
+  if (context.keyProperty) output[context.keyProperty] = key
+  return transform ? transform(output) : output
 }
 
-export const mapTransform = (
-  mapper: Mapper,
+export function mapTransform<Key, Value>(
+  mapper: Mapper<Key, Value>,
   args?: {
     configuration?: Configuration
-    getInputKey?: KeyGetter
-    keyProperty?: string
-    transform?: (value: Value) => Value
+    transform?: (value: Item) => Item
   }
-) =>
-  new Transform({
+) {
+  let transform!: Transform
+  const configuration = args?.configuration ?? {}
+  const keyProperty = configuration?.keyProperty ?? defaultKeyProperty
+  const valueProperty = configuration?.valueProperty ?? defaultKeyProperty
+  const context: MapContext<Key, Value> = {
+    configuration,
+    currentItem: {},
+    currentValue: undefined!,
+    inputKeyProperty: configuration.inputKeyProperty ?? keyProperty,
+    inputValueProperty: configuration.inputValueProperty,
+    keyProperty,
+    valueProperty,
+    write: (key: Key, value: any) =>
+      transform.push(mappedObject(key, value, context, args?.transform)),
+  }
+  const getInputItemKey = context.inputKeyProperty
+    ? (x: Item) => x[context.inputKeyProperty!]
+    : () => undefined
+  transform = new Transform({
     objectMode: true,
     transform(data, _, callback) {
-      const running = mapper.map(args?.getInputKey?.(data) ?? '', data, {
-        configuration: args?.configuration,
-        write: (key: Key, value: any) =>
-          this.push(
-            mappedObject(key, value, {
-              keyProperty: mapper.keyProperty ?? args?.keyProperty,
-              transform: args?.transform,
-            })
-          ),
-      })
+      context.currentItem = data
+      context.currentKey = getInputItemKey(context.currentItem)
+      context.currentValue = context.inputValueProperty ? data[context.inputValueProperty] : data
+      const running = mapper.map(context.currentKey!, context.currentValue, context)
       handleAsyncFunctionCallback(running, callback)
     },
   })
+  return transform
+}
 
-export const reduceTransform = (
-  reducer: Reducer,
-  args: { configuration?: Configuration; keyProperty: string }
-) =>
-  new Transform({
+export function reduceTransform<Key, Value>(
+  reducer: Reducer<Key, Value>,
+  args: { configuration?: Configuration }
+) {
+  let transform!: Transform
+  const configuration = args?.configuration ?? {}
+  const context: ReduceContext<Key, Value> = {
+    configuration,
+    currentItem: [],
+    currentValue: [],
+    keyProperty: configuration.keyProperty ?? defaultKeyProperty,
+    valueProperty: configuration.valueProperty ?? defaultValueProperty,
+    write: (key: Key, value: Value) => {
+      if (key !== context.currentKey) throw new Error(`Reducer can't change key`)
+      transform.push(value)
+    },
+  }
+  transform = new Transform({
     objectMode: true,
     transform(data, _, callback) {
-      const isArray = Array.isArray(data)
-      const reduceKey = isArray ? data[0].value[args.keyProperty] : data.value[args.keyProperty]
-      const context = {
-        configuration: args.configuration,
-        write: (key: Key, value: Value) => {
-          if (key !== reduceKey) throw new Error(`Reducer can't change key`)
-          this.push(value)
-        },
-      }
-      const running = reducer.reduce(
-        reduceKey,
-        isArray ? data.map((x: { source: string; value: Record<string, any> }) => x.value) : [data],
-        context
-      )
+      context.currentItem = Array.isArray(data)
+        ? data.map((x: { source: string; value: Record<string, any> }) => x.value)
+        : [data]
+      context.currentKey = context.currentItem[0][context.keyProperty]
+      context.currentValue = context.currentItem as any
+      const running = reducer.reduce(context.currentKey!, context.currentValue, context)
       handleAsyncFunctionCallback(running, callback)
     },
   })
+  return transform
+}
 
-export async function runReducePhase(
-  reducer: Reducer,
-  args: MapReduceJobConfig,
+export async function runReducePhase<Key, Value>(
+  reducer: Reducer<Key, Value>,
+  args: MapReduceJobConfig<Key, Value>,
   options: DatabaseCopyOptions
 ) {
-  const keyProperty = options.orderBy![0]
   options = {
     ...options,
     group: true,
@@ -300,15 +321,14 @@ export async function runReducePhase(
   await dbcp({
     ...options,
     fileSystem: args.fileSystem,
-    transformObjectStream: () =>
-      reduceTransform(reducer, { configuration: args.configuration, keyProperty }),
+    transformObjectStream: () => reduceTransform(reducer, { configuration: args.configuration }),
   })
 }
 
-export async function runMapPhaseWithExternalSorting(
-  mapper: Mapper,
-  combiner: Reducer | undefined,
-  args: MapReduceJobConfig,
+export async function runMapPhaseWithExternalSorting<Key, Value>(
+  mapper: Mapper<Key, Value>,
+  combiner: Reducer<Key, Value> | undefined,
+  args: MapReduceJobConfig<Key, Value>,
   options: DatabaseCopyOptions
 ) {
   const keyProperty = options.shardBy!
@@ -320,7 +340,11 @@ export async function runMapPhaseWithExternalSorting(
     throw new Error(`MapperImplementation.externalSorting doesn't support combiners`)
   }
   if (args.logger) {
-    args.logger.info(`mapReduce ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`)
+    args.logger.info(
+      `runMapPhaseWithExternalSorting ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(
+        options
+      )}`
+    )
   }
   await dbcp({
     ...options,
@@ -330,19 +354,17 @@ export async function runMapPhaseWithExternalSorting(
       transformInputObjectStream: () =>
         mapTransform(mapper, {
           configuration: args.configuration,
-          keyProperty,
-          getInputKey: args.inputKeyGetter ?? ((v) => v[keyProperty]),
         }),
     })),
   })
 }
 
-export async function runCleanupPhase(
+export async function runCleanupPhase<Key, Value>(
   shuffleDirectory: string,
   shuffleFormat: string,
   inputShards: number,
   outputShards: number,
-  args: MapReduceJobConfig
+  args: MapReduceJobConfig<Key, Value>
 ) {
   for (let outputShard = 0; outputShard < outputShards; outputShard++) {
     if (args.outputShardFilter && !args.outputShardFilter(outputShard)) continue

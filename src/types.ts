@@ -3,37 +3,53 @@ import type { Logger } from '@wholebuzz/fs/lib/util'
 import type { DatabaseCopyInput, DatabaseCopyOutput } from 'dbcp'
 import type { Factory } from './plugins'
 
-export type Key = string
-export type Value = Record<string, any>
-export type KeyGetter = (value: Value) => Key
-export type MapperClass = Factory<Mapper>
-export type ReducerClass = Factory<Reducer>
+export interface Item {
+  [key: string]: any
+}
+export type MapperClass<Key, Value> = Factory<Mapper<Key, Value>>
+export type ReducerClass<Key, Value> = Factory<Reducer<Key, Value>>
 
 export interface Configuration extends Record<string, any> {
   name?: string
   user?: string
+  inputKeyProperty?: string
+  inputValueProperty?: string
   keyProperty?: string
+  valueProperty?: string
 }
 
-export interface Context {
-  configuration?: Configuration
-  write: (key: Key, value: any) => void
+export interface Base<Key, Value> {
+  configure?: (config: MapReduceJobConfig<Key, Value>) => void
+  setup?: (context: Context<Key, Value>) => Promise<void>
+  cleanup?: (context: Context<Key, Value>) => Promise<void>
 }
 
-export interface Base {
-  configure?: (config: MapReduceJobConfig) => void
-  setup?: (context: Context) => Promise<void>
-  cleanup?: (context: Context) => Promise<void>
+export interface Context<Key, Value> {
+  configuration: Configuration
+  currentKey?: Key
+  keyProperty: string
+  valueProperty: string
+  write: (key: Key, value: Value) => void
 }
 
-export interface Mapper extends Base {
-  map: (key: Key, value: Value, context: Context) => void | Promise<void>
-  getInputKey?: KeyGetter
-  keyProperty?: string
+export interface MapContext<Key, Value> extends Context<Key, Value> {
+  currentItem: Item
+  currentValue: Value
+  inputKeyProperty?: string
+  inputValueProperty?: string
 }
 
-export interface Reducer extends Base {
-  reduce: (key: Key, values: Value[], context: Context) => void | Promise<void>
+export interface ReduceContext<Key, Value> extends Context<Key, Value> {
+  currentItem: Item[]
+  currentValue: Value[]
+}
+
+export interface Mapper<Key, Value> extends Base<Key, Value> {
+  map: (key: Key, value: Value, context: MapContext<Key, Value>) => void | Promise<void>
+}
+
+export interface Reducer<Key, Value> extends Base<Key, Value> {
+  reduce: (key: Key, values: Value[], context: ReduceContext<Key, Value>) => void | Promise<void>
 }
 
 export enum MapperImplementation {
@@ -42,25 +58,24 @@ export enum MapperImplementation {
   // memory = 'memory',
 }
 
-export interface MapReduceJobConfig extends DatabaseCopyInput, DatabaseCopyOutput {
+export interface MapReduceJobConfig<Key, Value> extends DatabaseCopyInput, DatabaseCopyOutput {
   autoSkipMapper?: boolean
   autoSkipReducer?: boolean
   cleanup?: boolean
-  combinerClass?: ReducerClass
+  combinerClass?: ReducerClass<Key, Value>
   configuration?: Configuration
   fileSystem: FileSystem
   jobid?: string
-  inputKeyGetter?: KeyGetter
   inputPaths: string[]
   inputShardFilter?: (index: number) => boolean
   inputOptions?: DatabaseCopyInput
   localDirectory?: string
   logger?: Logger
-  mapperClass?: MapperClass
+  mapperClass?: MapperClass<Key, Value>
   mapperImplementation?: MapperImplementation
   outputPath: string
   outputShardFilter?: (index: number) => boolean
-  reducerClass?: ReducerClass
+  reducerClass?: ReducerClass<Key, Value>
   runMapper?: boolean
   runReducer?: boolean
   shuffleDirectory?: string

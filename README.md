@@ -15,10 +15,10 @@ of the stages of Shuffle and Reduce.
 $ yarn start \
   --map SetKeyMapper \
   --reduce DeleteKeyReducer \
-  --inputKey id \
   --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
   --outputPath ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
   --outputShards 8 \
+  -D inputKeyProperty=id \
   -D setKey=guid
 
 mapReduce configuration {"setKey":"guid"}

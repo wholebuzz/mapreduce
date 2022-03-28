@@ -9,17 +9,16 @@ import { LevelUp } from 'levelup'
 import pSettle from 'p-settle'
 import { Transform } from 'stream'
 import StreamTree from 'tree-stream'
-import { mapTransform } from './mapreduce'
+import { defaultKeyProperty, defaultValueProperty, mapTransform } from './mapreduce'
 import { getObjectClassName } from './plugins'
-import { Configuration, Key, Mapper, MapReduceJobConfig, Reducer, Value } from './types'
+import { Configuration, Item, Mapper, MapReduceJobConfig, ReduceContext, Reducer } from './types'
 
-export async function runMapPhaseWithLevelDb(
-  mapper: Mapper,
-  _combiner: Reducer | undefined,
-  args: MapReduceJobConfig,
+export async function runMapPhaseWithLevelDb<Key, Value>(
+  mapper: Mapper<Key, Value>,
+  combiner: Reducer<Key, Value> | undefined,
+  args: MapReduceJobConfig<Key, Value>,
   options: DatabaseCopyOptions
 ) {
-  const keyProperty = options.shardBy!
   const outputFile = options.outputFile!
   const concurrency = 1
   const leveldbs = await pSettle(
@@ -39,7 +38,7 @@ export async function runMapPhaseWithLevelDb(
     }
     if (args.logger) {
       args.logger.info(
-        `mapReduce ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`
+        `runMapPhaseWithLevelDb ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`
       )
     }
     await dbcp({
@@ -50,16 +49,15 @@ export async function runMapPhaseWithLevelDb(
         transformInputObjectStream: () =>
           mapTransform(mapper, {
             configuration: args.configuration,
-            keyProperty,
-            getInputKey: args.inputKeyGetter ?? ((v) => v[keyProperty]),
           }),
       })),
       outputFormat: DatabaseCopyFormat.object,
       outputStream: dbs.map((db) =>
         StreamTree.writable(
-          streamAsyncFilter(async (item: any) =>
+          streamAsyncFilter(async (item: Item) =>
             combineWithLevelDb(item, db.db, {
-              keyProperty,
+              configuration: args.configuration,
+              combiner,
             })
           )
         )
@@ -92,20 +90,33 @@ export async function runMapPhaseWithLevelDb(
   }
 }
 
-export async function combineWithLevelDb(
-  out: Value,
+export async function combineWithLevelDb<Key, Value>(
+  out: Item,
   leveldb: level.LevelDB | LevelUp,
   args: {
     configuration?: Configuration
-    keyProperty: string
-    combiner?: Reducer
+    combiner?: Reducer<Key, Value>
   }
 ) {
-  const combinerOutput: Value[] = []
-  const combineKey = out[args.keyProperty]
+  let current: Item[] = []
+  const combinerOutput: Item[] = []
+  const configuration = args.configuration ?? {}
+  const context: ReduceContext<Key, Value> = {
+    configuration,
+    currentItem: current,
+    currentValue: undefined!,
+    keyProperty: configuration.keyProperty ?? defaultKeyProperty,
+    valueProperty: configuration.valueProperty ?? defaultValueProperty,
+    write: (key: Key, value: any) => {
+      if (key !== context.currentKey) throw new Error(`Combiner can't change key`)
+      combinerOutput.push(value)
+    },
+  }
+  context.currentKey = out[context.keyProperty]
   const leveldbKey =
-    typeof combineKey === 'number' ? formatNumberForUtf8Sort(combineKey) : combineKey
-  let current = []
+    typeof context.currentKey === 'number'
+      ? formatNumberForUtf8Sort(context.currentKey)
+      : context.currentKey
   try {
     current = (await leveldb.get(leveldbKey)) || []
   } catch (_err) {
@@ -113,13 +124,8 @@ export async function combineWithLevelDb(
   }
   current.push(out)
   if (current.length > 1 && args.combiner) {
-    const combinerRunning = args.combiner.reduce(combineKey, current, {
-      configuration: args.configuration,
-      write: (key: Key, value: any) => {
-        if (key !== combineKey) throw new Error(`Combiner can't change key`)
-        combinerOutput.push(value)
-      },
-    })
+    context.currentValue = context.currentItem as any
+    const combinerRunning = args.combiner.reduce(context.currentKey!, context.currentValue, context)
     if ((combinerRunning as any).then) await combinerRunning
   }
   await leveldb.put(leveldbKey, args.combiner ? combinerOutput : current)
