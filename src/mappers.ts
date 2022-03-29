@@ -1,21 +1,9 @@
 import pSettle from 'p-settle'
-import type { Context, Item, Mapper, MapReduceJobConfig } from './types'
+import type { Context, Mapper } from './types'
 
 export class IdentityMapper<Key, Value> implements Mapper<Key, Value> {
   map(key: Key, value: Value, context: Context<Key, Value>) {
     context.write(key, value)
-  }
-}
-
-export class SetKeyMapper<Key, Value extends Item> implements Mapper<Key, Value> {
-  configure(args: MapReduceJobConfig<Key, Value>) {
-    const key: Key | undefined = undefined
-    console.log('SetKeyMapper ', typeof key)
-    if (!args.configuration?.setKey) throw new Error(`SetKeyMapper requires -D setKey=x`)
-  }
-
-  map(_key: Key, value: Value, context: Context<Key, Value>) {
-    context.write(value[context.configuration.setKey], value)
   }
 }
 

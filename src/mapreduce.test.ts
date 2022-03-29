@@ -13,9 +13,9 @@ import {
   expectCreateFilesWithHashes,
   expectCreateFileWithHash,
 } from 'dbcp/dist/test.fixture'
-import { SetKeyMapper } from './mappers'
+import { IdentityMapper } from './mappers'
 import { getShardFilter, mapReduce, newJobId } from './mapreduce'
-import { DeleteKeyReducer, IdentityReducer } from './reducers'
+import { IdentityReducer } from './reducers'
 import { MapperImplementation, MapReduceJobConfig } from './types'
 
 const fileSystem = new AnyFileSystem([
@@ -30,14 +30,14 @@ const targetNDJsonHash = 'abb7fe0435d553c375c28e52aee28bdb'
 const targetShardedNumShards = 8
 const targetShardedNDJsonUrl = '/tmp/mapreduce-test-target-SSSS-of-NNNN.json.gz'
 const targetShardedNDHash = [
-  'f70cf4e8fdd35b11cf298b6e8e9b2814',
-  '4655506e23184b95ffb62fa0e05d4ec4',
-  '68f9d42f8bef36cbcbea505b24464fc4',
-  '859eb819a370a166cb033b2f6ee6be46',
-  'e6b472439e2087496d40c742363f9189',
-  '168ea82cd5084867cb4f662795970878',
-  '274200fd873f4269e5fd1cdd6b1ada18',
-  'ba042850df6e7655bce4733e7b16b95a',
+  '1697f4a5df9d6d9b2f3febb30cffb2f5',
+  '2835eaf9c6f6937f6cdec43e7f92f3d5',
+  'c3d60b41b0d7e79dc26e5b44fccca0e4',
+  '1fb2202908b8276533630ea13afa6734',
+  '378fd368ba83e2465eb112f7fcff23dc',
+  'a6e80d0c66919db56a20f32e2cc250d9',
+  '9f6e5eb0527f7d6fd9453a753f6b3c25',
+  '2332d51e6158add38c4635423883083b',
 ]
 
 describe('With MapperImplementation.externalSorting', () => {
@@ -74,13 +74,13 @@ async function testMapReduceSortByGuid<Key, Value>(
     targetShardedNDHash,
     () =>
       mapReduce({
-        configuration: { setKey: keyProperty },
+        configuration: { keyProperty },
         fileSystem,
         inputPaths: [testJsonUrl],
         outputPath: targetShardedNDJsonUrl,
         outputShards: targetShardedNumShards,
         logger,
-        mapperClass: SetKeyMapper,
+        mapperClass: IdentityMapper,
         reducerClass: IdentityReducer,
         ...options,
       })
@@ -91,14 +91,14 @@ async function testMapReduceSortByGuid<Key, Value>(
 async function testMapReduceSortById<Key, Value>(options: Partial<MapReduceJobConfig<Key, Value>>) {
   await expectCreateFileWithHash(fileSystem, targetNDJsonUrl, targetNDJsonHash, () =>
     mapReduce({
-      configuration: { setKey: 'id' },
+      configuration: { keyProperty: 'id' },
       fileSystem,
       inputPaths: [targetShardedNDJsonUrl],
       outputPath: targetNDJsonUrl,
       outputShards: 1,
       logger,
-      mapperClass: SetKeyMapper,
-      reducerClass: DeleteKeyReducer,
+      mapperClass: IdentityMapper,
+      reducerClass: IdentityReducer,
       ...options,
     })
   )
@@ -109,10 +109,10 @@ async function testExecMapReduceSortByGuid<Key, Value>(
 ) {
   const keyProperty = 'guid'
   await testExecMapReduce({
-    config: `-D setKey=${keyProperty}`,
+    config: `-D keyProperty=${keyProperty}`,
     inputPath: testJsonUrl,
     keyProperty,
-    mapper: 'SetKeyMapper',
+    mapper: 'IdentityMapper',
     mapperImplementation: options.mapperImplementation,
     outputHash: targetShardedNDHash,
     outputPath: targetShardedNDJsonUrl,
@@ -126,15 +126,15 @@ async function testExecMapReduceSortById<Key, Value>(
 ) {
   const keyProperty = 'id'
   await testExecMapReduce({
-    config: `-D setKey=${keyProperty}`,
+    config: `-D keyProperty=${keyProperty}`,
     inputPath: targetShardedNDJsonUrl,
     keyProperty,
-    mapper: 'SetKeyMapper',
+    mapper: 'IdentityMapper',
     mapperImplementation: options.mapperImplementation,
     outputHash: [targetNDJsonHash],
     outputPath: targetNDJsonUrl,
     outputShards: 1,
-    reducer: 'DeleteKeyReducer',
+    reducer: 'IdentityReducer',
   })
 }
 

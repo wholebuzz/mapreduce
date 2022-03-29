@@ -9,11 +9,11 @@ dependency on Reducers by using cloud storage as intermediary. We can run a larg
 and zero communication. Or we can run the usual many parallel Mappers, synchronizing only (via file IPC) the completion
 of the stages of Shuffle and Reduce.
 
-See [https://github.com/wholebuzz/mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
+See [https://github.com/wholebuzz/mapreduce-example](https://github.com/wholebuzz/mapreduce-example)
 
 ## Example
 
-### Sort and shard the input by `guid`
+### Sort (and shard) the supplied test data by `guid`
 
 ```console
 $ yarn start \
@@ -25,20 +25,28 @@ $ yarn start \
   -D keyProperty=guid
 ```
 
-### Sort and shard the input by `guid`, through the intermediate default key `key`
+### Re-sort (and shard) the output of the previous command by `id`
 
 ```console
 $ yarn start \
-  --map SetKeyMapper \
-  --reduce DeleteKeyReducer \
-  --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
-  --outputPath ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
-  --outputShards 8 \
-  -D inputKeyProperty=id \
-  -D setKey=guid
+  --map IdentityMapper \
+  --reduce IdentityReducer \
+  --inputPaths ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
+  --outputPath ./test-id-sorted-SSSS-of-NNNN.json.gz \
+  --outputShards 4 \
+  -D keyProperty=id
 ```
 
-## Technical overfiew
+### And we're back to where we started
+
+```console
+$ diff ./test-id-sorted-0000-of-0004.json.gz ./test/test-0000-of-0004.json.gz
+$ diff ./test-id-sorted-0001-of-0004.json.gz ./test/test-0001-of-0004.json.gz
+$ diff ./test-id-sorted-0002-of-0004.json.gz ./test/test-0002-of-0004.json.gz
+$ diff ./test-id-sorted-0003-of-0004.json.gz ./test/test-0003-of-0004.json.gz
+```
+
+## Technical overview
 
 ### Top-level:
 
