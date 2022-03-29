@@ -1,7 +1,7 @@
 import { FileSystem } from '@wholebuzz/fs/lib/fs'
 import { readableToString } from '@wholebuzz/fs/lib/stream'
 import parseKeyValue from 'parse-key-value-pair'
-import path from 'path'
+import { parse as pathParse } from 'path'
 
 export const requireFromString = require('require-from-string')
 
@@ -51,7 +51,7 @@ export function loadPlugin<X>(
 ) {
   for (const key of Object.keys(plugin)) {
     const factory: any = plugin[key]
-    out[key === 'default' ? path.parse(url).name : key] = factory
+    out[key === 'default' ? pathParse(url).name : key] = factory
   }
   return out
 }
@@ -78,4 +78,27 @@ export function parseConfiguration(input?: string | string[]) {
     }
   }
   return ret
+}
+
+export function getSubProperty(x: Record<string, any>, path?: string[]): any {
+  for (const key of path ?? []) {
+    x = x[key]
+    if (!x) break
+  }
+  return x
+}
+
+export function getSubPropertyWithPath(x: Record<string, any>, path?: string) {
+  return getSubProperty(x, path?.split('.'))
+}
+
+export function getSubPropertyAccessor(path: string): (_: Record<string, any>) => any {
+  const nested = path?.split('.')
+  if (nested.length === 0) {
+    return (x) => x
+  } else if (nested.length === 1) {
+    return (x) => x[nested[0]]
+  } else {
+    return (x) => getSubProperty(x, nested)
+  }
 }

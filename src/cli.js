@@ -28,6 +28,10 @@ process.on('uncaughtException', (err) => console.error('unhandled exception', er
 async function main() {
   const formats = Object.values(DatabaseCopyFormat)
   const args = yargs.strict().options({
+    combine: {
+      description: 'Combiner name',
+      type: 'string',
+    },
     config: {
       alias: 'D',
       description: 'Configuration',
@@ -101,7 +105,6 @@ async function main() {
     },
     mapperImplementation: {
       choices: Object.values(MapperImplementation),
-      default: MapperImplementation.externalSorting,
       description: 'Mapper implementation',
       type: 'string',
     },
@@ -208,16 +211,21 @@ async function main() {
 
   const mapperClass = args.map ? plugins[args.map] : plugins.IdentityMapper
   const reducerClass = args.reduce ? plugins[args.reduce] : plugins.IdentityReducer
+  const combinerClass = args.combine ? plugins[args.combine] : undefined
   if (!mapperClass) {
     throw new Error(`Unknown mapper: ${args.map}`)
   }
   if (!reducerClass) {
-    throw new Error(`Unknown mapper: ${args.reduce}`)
+    throw new Error(`Unknown reducer: ${args.reduce}`)
+  }
+  if (!combinerClass && args.combine) {
+    throw new Error(`Unknown combiner: ${args.combine}`)
   }
 
   const shardFilter = getShardFilter(args.workerIndex, args.numWorkers)
   const options = {
     ...args,
+    combinerClass,
     configuration: parseConfiguration(args.config),
     fileSystem,
     inputShardFilter: shardFilter,

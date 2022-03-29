@@ -9,7 +9,13 @@ import { LevelUp } from 'levelup'
 import pSettle from 'p-settle'
 import { Transform } from 'stream'
 import StreamTree from 'tree-stream'
-import { defaultKeyProperty, defaultValueProperty, mapTransform } from './mapreduce'
+import {
+  defaultKeyProperty,
+  defaultValueProperty,
+  getItemValueAccessor,
+  mappedObject,
+  mapTransform,
+} from './mapreduce'
 import { getObjectClassName } from './plugins'
 import { Configuration, Item, Mapper, MapReduceJobConfig, ReduceContext, Reducer } from './types'
 
@@ -96,23 +102,29 @@ export async function combineWithLevelDb<Key, Value>(
   args: {
     configuration?: Configuration
     combiner?: Reducer<Key, Value>
+    transform?: (value: Item) => Item
   }
 ) {
-  let current: Item[] = []
   const combinerOutput: Item[] = []
   const configuration = args.configuration ?? {}
+  const keyProperty = configuration.keyProperty ?? defaultKeyProperty
+  const valueProperty = configuration.valueProperty ?? defaultValueProperty
+  const getItemKey = getItemValueAccessor(keyProperty)
+  const getItemValue = getItemValueAccessor(valueProperty)
   const context: ReduceContext<Key, Value> = {
     configuration,
-    currentItem: current,
+    currentItem: [],
+    currentKey: getItemKey(out),
     currentValue: undefined!,
-    keyProperty: configuration.keyProperty ?? defaultKeyProperty,
-    valueProperty: configuration.valueProperty ?? defaultValueProperty,
+    keyProperty,
+    valueProperty,
     write: (key: Key, value: any) => {
       if (key !== context.currentKey) throw new Error(`Combiner can't change key`)
-      combinerOutput.push(value)
+      combinerOutput.push(mappedObject(key, value, context, args?.transform))
     },
   }
-  context.currentKey = out[context.keyProperty]
+
+  let current: Item[] = []
   const leveldbKey =
     typeof context.currentKey === 'number'
       ? formatNumberForUtf8Sort(context.currentKey)
@@ -123,12 +135,19 @@ export async function combineWithLevelDb<Key, Value>(
     /* */
   }
   current.push(out)
-  if (current.length > 1 && args.combiner) {
-    context.currentValue = context.currentItem as any
-    const combinerRunning = args.combiner.reduce(context.currentKey!, context.currentValue, context)
-    if ((combinerRunning as any).then) await combinerRunning
+
+  const runCombiner = current.length > 1 && !!args.combiner
+  if (runCombiner) {
+    context.currentItem = current
+    context.currentValue = context.currentItem.map(getItemValue)
+    const combinerRunning = args.combiner!.reduce(
+      context.currentKey!,
+      context.currentValue,
+      context
+    )
+    if ((combinerRunning as any)?.then) await combinerRunning
   }
-  await leveldb.put(leveldbKey, args.combiner ? combinerOutput : current)
+  await leveldb.put(leveldbKey, runCombiner ? combinerOutput : current)
 }
 
 export function streamFromCombinedLevelDb(leveldb: level.LevelDB | LevelUp) {

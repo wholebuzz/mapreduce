@@ -9,7 +9,23 @@ dependency on Reducers by using cloud storage as intermediary. We can run a larg
 and zero communication. Or we can run the usual many parallel Mappers, synchronizing only (via file IPC) the completion
 of the stages of Shuffle and Reduce.
 
+See [https://github.com/wholebuzz/mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
+
 ## Example
+
+### Sort and shard the input by `guid`
+
+```console
+$ yarn start \
+  --map IdentityMapper \
+  --reduce IdentityReducer \
+  --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
+  --outputPath ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
+  --outputShards 8 \
+  -D keyProperty=guid
+```
+
+### Sort and shard the input by `guid`, through the intermediate default key `key`
 
 ```console
 $ yarn start \
@@ -20,24 +36,12 @@ $ yarn start \
   --outputShards 8 \
   -D inputKeyProperty=id \
   -D setKey=guid
-
-mapReduce configuration {"setKey":"guid"}
-mapReduce SetKeyMapper {"externalSortBy":["_key"],"shardBy":"_key","sourceFiles":[{"url":"./test/test-0000-of-0004.json.gz"}],"targetFile":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-SSSS-of-NNNN.inputshard-0000-of-0004.jsonl.gz","targetShards":8,"tempDirectories":["./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp0","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp1","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp2","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp3","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp4","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp5","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp6","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp7"]}
-mapReduce SetKeyMapper {"externalSortBy":["_key"],"shardBy":"_key","sourceFiles":[{"url":"./test/test-0001-of-0004.json.gz"}],"targetFile":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-SSSS-of-NNNN.inputshard-0001-of-0004.jsonl.gz","targetShards":8,"tempDirectories":["./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp0","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp1","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp2","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp3","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp4","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp5","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp6","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp7"]}
-mapReduce SetKeyMapper {"externalSortBy":["_key"],"shardBy":"_key","sourceFiles":[{"url":"./test/test-0002-of-0004.json.gz"}],"targetFile":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-SSSS-of-NNNN.inputshard-0002-of-0004.jsonl.gz","targetShards":8,"tempDirectories":["./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp0","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp1","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp2","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp3","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp4","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp5","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp6","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp7"]}
-mapReduce SetKeyMapper {"externalSortBy":["_key"],"shardBy":"_key","sourceFiles":[{"url":"./test/test-0003-of-0004.json.gz"}],"targetFile":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-SSSS-of-NNNN.inputshard-0003-of-0004.jsonl.gz","targetShards":8,"tempDirectories":["./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp0","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp1","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp2","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp3","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp4","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp5","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp6","./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/maptmp7"]}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0000-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0000-of-0008.jsonl.gz"}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0001-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0001-of-0008.jsonl.gz"}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0002-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0002-of-0008.jsonl.gz"}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0003-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0003-of-0008.jsonl.gz"}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0004-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0004-of-0008.jsonl.gz"}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0005-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0005-of-0008.jsonl.gz"}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0006-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0006-of-0008.jsonl.gz"}
-mapReduce IdentityReducer {"group":true,"groupLabels":true,"orderBy":["_key"],"sourceFiles":[{"url":"./taskTracker/mr-user/jobcache/mr-job-1647028099393/work/shuffle-0007-of-0008.inputshard-SSSS-of-NNNN.jsonl.gz","sourceShards":4}],"targetFile":"./test-guid-sorted-0007-of-0008.jsonl.gz"}
-done
 ```
 
-## Top-level:
+## Technical overfiew
+
+### Top-level:
+
   - API: `MapReduce(filein, fileout, mapperClass, reducerClass, combinerClass)`
 
   - input: `filein-SSSS-of-NNNN.jsonl.gz`
@@ -46,7 +50,8 @@ done
   - output: `fileout-SSSS-of-NNNN.jsonl.gz`
     e.g. `fileout-0000-of-0004.jsonl.gz`, `fileout-0001-of-0004.jsonl.gz`, ..., `fileout-0003-of-0004.jsonl.gz`
 
-## Mapper step:
+### Mapper step:
+
   - For each input shard:
     - Map() is called for each line of the JSONL
     - Outputs `numOutputShards` files
@@ -77,12 +82,12 @@ done
     - `shuffle-0001-of-0004.inputshard-0003-of-0004.jsonl.gz`, ...,
     - `shuffle-0003-of-0004.inputshard-0003-of-0004.jsonl.gz`
 
-## Shuffle step:
+### Shuffle step:
 
   - If the output of the external-sort was streamed to cloud storage, this step is already done.
   - Otherwise, upload files with AnyFileSystem copy between temporary directory (e.g. local) and reduce directory (e.g. s3://).
 
-## Reducer step:
+### Reducer step:
 
   - For each output shard:
     - Streaming K-way merge sort on `shuffle-SSSS-of-NNNN.inputshard-*-of-0004.jsonl.gz`, e.g. merge
@@ -95,7 +100,7 @@ done
   - Output is written to: `fileout-SSSS-of-NNNN.jsonl.gz` for each shard,
     e.g. `fileout-0000-of-0004.jsonl.gz`, `fileout-0001-of-0004.jsonl.gz`, ..., `fileout-0003-of-0004.jsonl.gz`
 
-## Cleanup:
+### Cleanup:
 
   - The shuffle files can be removed
 

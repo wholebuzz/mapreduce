@@ -24,12 +24,12 @@ export interface Base<Key, Value> {
   cleanup?: (context: Context<Key, Value>) => Promise<void>
 }
 
-export interface Context<Key, Value> {
+export interface Context<Key, _Value> {
   configuration: Configuration
   currentKey?: Key
   keyProperty: string
   valueProperty: string
-  write: (key: Key, value: Value) => void
+  write: (key: Key, value: any) => void
 }
 
 export interface MapContext<Key, Value> extends Context<Key, Value> {

@@ -11,7 +11,7 @@ import { inputIsSqlDatabase } from 'dbcp/dist/format'
 import { updateObjectProperties } from 'dbcp/dist/util'
 import { Transform } from 'stream'
 import { runMapPhaseWithLevelDb } from './leveldb'
-import { factoryConstruct, getObjectClassName } from './plugins'
+import { factoryConstruct, getObjectClassName, getSubPropertyAccessor } from './plugins'
 import {
   Configuration,
   Context,
@@ -26,7 +26,8 @@ import {
 
 export const defaultDiretory = './'
 export const defaultKeyProperty = 'key'
-export const defaultValueProperty = 'value'
+export const defaultValueProperty = ''
+export const unknownWriteProperty = 'value'
 export const defaultShuffleFormat = 'jsonl.gz'
 export const shuffleFilenameFormat = 'shuffle-SSSS-of-NNNN'
 export const inputshardFilenameFormat = 'inputshard-SSSS-of-NNNN'
@@ -170,11 +171,11 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
     const waitForUrl = args.synchronizeMap
       ? shuffleDirectory + synchronizeMapFilenameFormat
       : options.inputFiles[0].url
-    console.log(`Wait for ${waitForUrl}@${inputShards}`)
+    args.logger?.debug(`Wait for ${waitForUrl}@${inputShards}`)
     await waitForCompleteShardedInput(args.fileSystem, waitForUrl, {
       shards: inputShards.length,
     })
-    console.log(`Found ${waitForUrl}`)
+    args.logger?.debug(`Found ${waitForUrl}`)
 
     if (!args.reducerClass) throw new Error('No reducer')
     const reducer = factoryConstruct(args.reducerClass)
@@ -228,7 +229,10 @@ export function mappedObject<Key, Value>(
   context: Context<Key, Value>,
   transform?: (value: Item) => Item
 ): Item {
-  const output: Item = typeof value === 'object' ? { ...value } : { [context.valueProperty]: value }
+  const output: Item =
+    typeof value === 'object'
+      ? { ...value }
+      : { [context.valueProperty || unknownWriteProperty]: value }
   if (context.keyProperty) output[context.keyProperty] = key
   return transform ? transform(output) : output
 }
@@ -243,27 +247,26 @@ export function mapTransform<Key, Value>(
   let transform!: Transform
   const configuration = args?.configuration ?? {}
   const keyProperty = configuration?.keyProperty ?? defaultKeyProperty
-  const valueProperty = configuration?.valueProperty ?? defaultKeyProperty
+  const valueProperty = configuration?.valueProperty ?? defaultValueProperty
   const context: MapContext<Key, Value> = {
     configuration,
     currentItem: {},
     currentValue: undefined!,
     inputKeyProperty: configuration.inputKeyProperty ?? keyProperty,
-    inputValueProperty: configuration.inputValueProperty,
+    inputValueProperty: configuration.inputValueProperty ?? valueProperty,
     keyProperty,
     valueProperty,
     write: (key: Key, value: any) =>
       transform.push(mappedObject(key, value, context, args?.transform)),
   }
-  const getInputItemKey = context.inputKeyProperty
-    ? (x: Item) => x[context.inputKeyProperty!]
-    : () => undefined
+  const getItemKey = getItemKeyAccessor(context.inputKeyProperty)
+  const getItemValue = getItemValueAccessor(context.inputValueProperty)
   transform = new Transform({
     objectMode: true,
-    transform(data, _, callback) {
+    transform(data: Item, _, callback) {
       context.currentItem = data
-      context.currentKey = getInputItemKey(context.currentItem)
-      context.currentValue = context.inputValueProperty ? data[context.inputValueProperty] : data
+      context.currentKey = getItemKey(context.currentItem)
+      context.currentValue = getItemValue(context.currentItem)
       const running = mapper.map(context.currentKey!, context.currentValue, context)
       handleAsyncFunctionCallback(running, callback)
     },
@@ -273,7 +276,7 @@ export function mapTransform<Key, Value>(
 
 export function reduceTransform<Key, Value>(
   reducer: Reducer<Key, Value>,
-  args: { configuration?: Configuration }
+  args: { configuration?: Configuration; transform?: (value: Item) => Item }
 ) {
   let transform!: Transform
   const configuration = args?.configuration ?? {}
@@ -283,19 +286,21 @@ export function reduceTransform<Key, Value>(
     currentValue: [],
     keyProperty: configuration.keyProperty ?? defaultKeyProperty,
     valueProperty: configuration.valueProperty ?? defaultValueProperty,
-    write: (key: Key, value: Value) => {
+    write: (key: Key, value: any) => {
       if (key !== context.currentKey) throw new Error(`Reducer can't change key`)
-      transform.push(value)
+      transform.push(mappedObject(key, value, context, args?.transform))
     },
   }
+  const getItemKey = getItemKeyAccessor(context.keyProperty)
+  const getItemValue = getItemValueAccessor(context.valueProperty)
   transform = new Transform({
     objectMode: true,
     transform(data, _, callback) {
       context.currentItem = Array.isArray(data)
         ? data.map((x: { source: string; value: Record<string, any> }) => x.value)
         : [data]
-      context.currentKey = context.currentItem[0][context.keyProperty]
-      context.currentValue = context.currentItem as any
+      context.currentKey = getItemKey(context.currentItem[0])
+      context.currentValue = context.currentItem.map(getItemValue)
       const running = reducer.reduce(context.currentKey!, context.currentValue, context)
       handleAsyncFunctionCallback(running, callback)
     },
@@ -315,7 +320,7 @@ export async function runReducePhase<Key, Value>(
   }
   if (args.logger) {
     args.logger.info(
-      `mapReduce ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
+      `runReducePhase ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
     )
   }
   await dbcp({
@@ -425,3 +430,9 @@ export function getWorkDirectory(user: string, jobid: string) {
 export function getShardFilter(workerIndex: number, numWorkers: number) {
   return numWorkers > 1 ? (index: number) => index % numWorkers === workerIndex : undefined
 }
+
+export const getItemKeyAccessor = (inputKeyProperty?: string) =>
+  inputKeyProperty ? getSubPropertyAccessor(inputKeyProperty) : () => undefined
+
+export const getItemValueAccessor = (inputValueProperty?: string) =>
+  inputValueProperty ? getSubPropertyAccessor(inputValueProperty) : (x: any) => x
