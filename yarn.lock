@@ -1137,10 +1137,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@wholebuzz/fs@^1.2.5":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@wholebuzz/fs/-/fs-1.2.5.tgz#06adb27f90926145d2791e86c486f4c4175e8416"
-  integrity sha512-y/WT0nwqs/hkqMzfJAnyRjrU7hRmQ01wdJrLdTNXWZIhfi3vd4eLmcbZjzb3vzJhMjk0YCgGrZ4wpKAxHCW3ug==
+"@wholebuzz/fs@^1.2.6":
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/@wholebuzz/fs/-/fs-1.2.6.tgz#b444ebcee9552546dba13f1cb4a270849a500055"
+  integrity sha512-nyAJMk9cNVQGRiFakEM6k3VhbrMYjOmPv3WDaDHR/ohXnWsnNEbdm5f7v4UtqjaxotMS/buHCIj2dLBUAPOtkg==
   dependencies:
     "@types/through" "^0.0.30"
     JSONStream "^1.3.5"
@@ -2067,17 +2067,17 @@ db-json-column@^0.0.3:
   resolved "https://registry.yarnpkg.com/db-json-column/-/db-json-column-0.0.3.tgz#b01153994da6712074d30d95f4f970946809a05d"
   integrity sha512-aEXyL6kZxVAJJ0jVmZNlAHIKnVTPgd976oLIOgFmfVGNdvn4q4zmpQrVp04lPlxT13ezeNc4zH1t0zUBcSiDeQ==
 
-dbcp@^1.4.3:
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.3.tgz#0cf08b84c86c0128056bc6fb4491221fba368800"
-  integrity sha512-zokLeLeK4Y6gUvkC1wOOVqhbDXB33Fshfp7HndCam0nm/eLgDH4fGcQy3IE2A8gZRMPXnOO7EGaB182NyhlgXQ==
+dbcp@^1.4.4:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.4.tgz#4d51daa00a464a413e28fe93d6f5bb73b285dbb7"
+  integrity sha512-D/EWX0smT0Hz8BC+PNYh5Ibkg13mbrDTLzwpuWxa4hisWNtYBllMRNTa3+hauaa3OUjj6os40d0Hct9tYoMJnA==
   dependencies:
     "@azure/identity" "^2.0.0"
     "@azure/storage-blob" "^12.8.0"
     "@elastic/elasticsearch" "^7.15.0"
     "@google-cloud/storage" "^5.8.1"
     "@marsaud/smb2" "^0.18.0"
-    "@wholebuzz/fs" "^1.2.5"
+    "@wholebuzz/fs" "^1.2.6"
     athena-express "^7.1.3"
     aws-sdk "^2.975.0"
     axios "^0.20.0"

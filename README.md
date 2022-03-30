@@ -4,16 +4,11 @@
 
 ### MapReduce for the 99%
 
-Instead of starting a Master which starts simultaneous Mappers and Reducers on a cluster, let's decouple Mappers' 
-dependency on Reducers by using cloud storage as intermediary. We can run a large MapReduce job with a single-thread
-and zero communication. Or we can run the usual many parallel Mappers, synchronizing only (via file IPC) the completion
-of the stages of Shuffle and Reduce.
-
 See [https://github.com/wholebuzz/mapreduce-example](https://github.com/wholebuzz/mapreduce-example)
 
 ## Example
 
-### Sort (and shard) the supplied test data by `guid`
+### Sort (and shard) the [supplied test data](https://github.com/wholebuzz/mapreduce/tree/main/test) by `guid`
 
 ```console
 $ yarn start \
@@ -47,6 +42,11 @@ $ diff ./test-id-sorted-0003-of-0004.json.gz ./test/test-0003-of-0004.json.gz
 ```
 
 ## Technical overview
+
+Instead of starting a Master which starts simultaneous Mappers and Reducers on a cluster, let's decouple Mappers' 
+dependency on Reducers by using cloud storage as intermediary. We can run a large MapReduce job with a single-thread
+and zero communication. Or we can run the usual many parallel Mappers, synchronizing only (via file IPC) the completion
+of the stages of Shuffle and Reduce.
 
 ### Top-level:
 
