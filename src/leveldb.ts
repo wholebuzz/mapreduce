@@ -16,7 +16,7 @@ import {
   mappedObject,
   mapTransform,
 } from './mapreduce'
-import { getObjectClassName } from './plugins'
+import { formatNumberForUtf8Sort, getObjectClassName } from './plugins'
 import { Configuration, Item, Mapper, MapReduceJobConfig, ReduceContext, Reducer } from './types'
 
 export async function runMapPhaseWithLevelDb<Key, Value>(
@@ -162,9 +162,3 @@ export function streamFromCombinedLevelDb(leveldb: level.LevelDB | LevelUp) {
     })
   )
 }
-
-// maxIntegerDigits == '9007199254740991'.length == 16
-export const maxIntegerDigits = Number.MAX_SAFE_INTEGER.toString().length
-
-export const formatNumberForUtf8Sort = (value: number, reverse?: boolean) =>
-  (reverse ? Number.MAX_SAFE_INTEGER - value : value).toString().padStart(maxIntegerDigits, '0')

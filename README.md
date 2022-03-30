@@ -41,6 +41,24 @@ $ diff ./test-id-sorted-0002-of-0004.json.gz ./test/test-0002-of-0004.json.gz
 $ diff ./test-id-sorted-0003-of-0004.json.gz ./test/test-0003-of-0004.json.gz
 ```
 
+## Same example using arbitrary number of (potentially disitributed and parallel) workers
+
+### Sort the supplied test data by `guid` using three workers
+
+```console
+$ export MY_JOB_ID=`yarn --silent start job --new | tail -1 | jq -r ".jobid"`
+$ for ((i = 0; i < 3; i++)); do yarn start \
+  --jobid $MY_JOB_ID \
+  --map IdentityMapper \
+  --reduce IdentityReducer \
+  --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
+  --outputPath ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
+  --outputShards 8 \
+  --numWorkers 3 \
+  --workerIndex $i \
+  -D keyProperty=guid &; done
+```
+
 ## Technical overview
 
 Instead of starting a Master which starts simultaneous Mappers and Reducers on a cluster, let's decouple Mappers' 

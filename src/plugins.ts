@@ -102,3 +102,9 @@ export function getSubPropertyAccessor(path: string): (_: Record<string, any>) =
     return (x) => getSubProperty(x, nested)
   }
 }
+
+// maxIntegerDigits == '9007199254740991'.length == 16
+export const maxIntegerDigits = Number.MAX_SAFE_INTEGER.toString().length
+
+export const formatNumberForUtf8Sort = (value: number, reverse?: boolean) =>
+  (reverse ? Number.MAX_SAFE_INTEGER - value : value).toString().padStart(maxIntegerDigits, '0')
