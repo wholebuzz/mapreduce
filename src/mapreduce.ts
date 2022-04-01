@@ -7,7 +7,7 @@ import {
   waitForCompleteShardedInput,
 } from '@wholebuzz/fs/lib/util'
 import { assignDatabaseCopyOutputProperties, DatabaseCopyOptions, dbcp } from 'dbcp'
-import { inputIsSqlDatabase } from 'dbcp/dist/format'
+import { DatabaseCopyShardFunction, inputIsSqlDatabase } from 'dbcp/dist/format'
 import { updateObjectProperties } from 'dbcp/dist/util'
 import { Transform } from 'stream'
 import { runMapPhaseWithLevelDb } from './leveldb'
@@ -49,14 +49,11 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
   // Validate input
   if (!localDirectory.endsWith('/')) throw new Error('localDirectory should end with slash')
   if (!shuffleDirectory.endsWith('/')) throw new Error('shuffleDirectory should end with slash')
-  if (args.inputPaths.length !== 1) {
-    throw new Error('Only one (sharded) input is currently supported')
-  }
   if (args.logger) {
     args.logger.info(`mapReduce configuration ${JSON.stringify(args.configuration ?? {})}`)
   }
 
-  // Since local file show partial writes they need extra synchronization
+  // Since local files show partial writes they need extra synchronization
   const isCloudStorageUrl =
     shuffleDirectory.startsWith('s3://') || shuffleDirectory.startsWith('gs://')
   if (args.synchronizeMap === undefined && !isCloudStorageUrl) {
@@ -66,29 +63,28 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
     args.synchronizeReduce = true
   }
 
-  // Find input shards
-  const inputShards: string[] = []
+  // Find input splits
+  const inputSplits: string[] = []
   for (const path of args.inputPaths) {
     if (isShardedFilename(path)) {
       const numShards = (await readShardFilenames(args.fileSystem, path)).numShards
       for (let i = 0; i < numShards; i++) {
-        inputShards.push(shardedFilename(args.inputPaths[0], { index: i, modulus: numShards }))
+        inputSplits.push(shardedFilename(args.inputPaths[0], { index: i, modulus: numShards }))
       }
     } else {
-      inputShards.push(path)
+      inputSplits.push(path)
     }
   }
 
   // map phase
-  let skippedMapper = !!args.skipMapper
-  const runMapper = args.runMapper !== false && !skippedMapper
-  for (let inputShard = 0; runMapper && inputShard < inputShards.length; inputShard++) {
-    if (args.inputShardFilter && !args.inputShardFilter(inputShard)) continue
-    const shard = { index: inputShard, modulus: inputShards.length }
+  const runMap = args.runMap !== false && !args.unpatchMap
+  for (let inputSplit = 0; runMap && inputSplit < inputSplits.length; inputSplit++) {
+    if (args.inputShardFilter && !args.inputShardFilter(inputSplit)) continue
+    const shard = { index: inputSplit, modulus: inputSplits.length }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
     const localDirectories = new Array(outputShards)
       .fill(localDirectory)
-      .map((x, i) => x + `${localTempDirectoryPrefix}-input${inputShard}-output${i}/`)
+      .map((x, i) => x + `${localTempDirectoryPrefix}-input${inputSplit}-output${i}/`)
     const options: DatabaseCopyOptions = {
       ...assignDatabaseCopyOutputProperties(args, undefined),
       shardBy: keyProperty,
@@ -96,25 +92,19 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
         ? undefined
         : [
             {
-              url: inputShards[inputShard],
+              url: inputSplits[inputSplit],
             },
           ],
-      outputFile: shuffleDirectory + `${shuffleFilenameFormat}.${inputshard}.${shuffleFormat}`,
+      // dir/shuffle-SSSS-of-NNNN.inputshard-0000-of-0004.jsonl.gz
+      outputFile:
+        (args.unpatchReduce ? args.outputPath : shuffleDirectory + `${shuffleFilenameFormat}`) +
+        `.${inputshard}.${shuffleFormat}`,
       outputShards,
       tempDirectories: localDirectories,
     }
 
     if (!args.mapperClass) throw new Error('No mapper')
     const mapper = factoryConstruct(args.mapperClass)
-    if (getObjectClassName(mapper) === 'IdentityMapper' && inputShards.length === outputShards) {
-      if (args.skipMapper || args.autoSkipMapper) {
-        skippedMapper = true
-        break
-      } else {
-        args.logger?.info(`Using IdentityMapper with equal input and output shards`)
-        args.logger?.info(`Consider using skipMapper or autoSkipMapper`)
-      }
-    }
     if (mapper.configure) mapper.configure(args)
     if (mapper.setup) {
       await mapper.setup(immutableContext(args.configuration))
@@ -148,32 +138,35 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
   }
 
   // reduce phase
-  const skippedReducer = !!args.skipReducer
-  const runReducer = args.runReducer !== false && !skippedReducer
-  for (let outputShard = 0; runReducer && outputShard < outputShards; outputShard++) {
+  const runReduce = args.runReduce !== false && !args.unpatchReduce
+  for (let outputShard = 0; runReduce && outputShard < outputShards; outputShard++) {
     if (args.outputShardFilter && !args.outputShardFilter(outputShard)) continue
     const shard = { index: outputShard, modulus: outputShards }
     const options = {
       ...assignDatabaseCopyOutputProperties({}, args),
       orderBy: [keyProperty],
-      inputFiles: [
-        {
-          url:
-            shuffleDirectory +
-            shardedFilename(shuffleFilenameFormat, shard) +
-            `.${inputshardFilenameFormat}.${shuffleFormat}`,
-          inputShards: inputShards.length,
-        },
-      ],
+      inputFiles: args.unpatchMap
+        ? inputSplits.map((x) => ({
+            url: x,
+          }))
+        : [
+            {
+              url:
+                shuffleDirectory +
+                shardedFilename(shuffleFilenameFormat, shard) +
+                `.${inputshardFilenameFormat}.${shuffleFormat}`,
+              inputShards: inputSplits.length,
+            },
+          ],
       outputFile: shardedFilename(args.outputPath, shard),
     }
 
     const waitForUrl = args.synchronizeMap
       ? shuffleDirectory + synchronizeMapFilenameFormat
       : options.inputFiles[0].url
-    args.logger?.debug(`Wait for ${waitForUrl}@${inputShards}`)
+    args.logger?.debug(`Wait for ${waitForUrl}@${inputSplits}`)
     await waitForCompleteShardedInput(args.fileSystem, waitForUrl, {
-      shards: inputShards.length,
+      shards: inputSplits.length,
     })
     args.logger?.debug(`Found ${waitForUrl}`)
 
@@ -198,7 +191,17 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
 
   // cleanup phase
   if (args.cleanup !== false) {
-    await runCleanupPhase(shuffleDirectory, shuffleFormat, inputShards.length, outputShards, args)
+    await runCleanupPhase(
+      {
+        inputShards: inputSplits.length,
+        outputShards,
+        runMap,
+        runReduce,
+        shuffleDirectory,
+        shuffleFormat,
+      },
+      args
+    )
   }
 }
 
@@ -337,9 +340,13 @@ export async function runMapPhaseWithExternalSorting<Key, Value>(
   options: DatabaseCopyOptions
 ) {
   const keyProperty = options.shardBy!
+  const dontSort =
+    args.unpatchReduce &&
+    (args.outputShardFunction === DatabaseCopyShardFunction.random ||
+      args.outputShardFunction === DatabaseCopyShardFunction.roundrobin)
   options = {
     ...options,
-    externalSortBy: [keyProperty],
+    externalSortBy: dontSort ? undefined : [keyProperty],
   }
   if (combiner) {
     throw new Error(`MapperImplementation.externalSorting doesn't support combiners`)
@@ -365,50 +372,67 @@ export async function runMapPhaseWithExternalSorting<Key, Value>(
 }
 
 export async function runCleanupPhase<Key, Value>(
-  shuffleDirectory: string,
-  shuffleFormat: string,
-  inputShards: number,
-  outputShards: number,
-  args: MapReduceJobConfig<Key, Value>
+  args: {
+    inputShards: number
+    outputShards: number
+    runMap: boolean
+    runReduce: boolean
+    shuffleDirectory: string
+    shuffleFormat: string
+  },
+  options: MapReduceJobConfig<Key, Value>
 ) {
-  for (let outputShard = 0; outputShard < outputShards; outputShard++) {
-    if (args.outputShardFilter && !args.outputShardFilter(outputShard)) continue
-    const shard = { index: outputShard, modulus: outputShards }
-    for (let inputShard = 0; inputShard < inputShards; inputShard++) {
-      await args.fileSystem.removeFile(
-        shuffleDirectory +
-          shardedFilename(shuffleFilenameFormat, shard) +
-          '.' +
-          shardedFilename(inputshardFilenameFormat, {
-            index: inputShard,
-            modulus: inputShards,
-          }) +
-          `.${shuffleFormat}`
-      )
-    }
-  }
-
-  if (!args.outputShardFilter || args.outputShardFilter(0)) {
-    if (args.synchronizeReduce) {
-      await waitForCompleteShardedInput(
-        args.fileSystem,
-        shuffleDirectory + synchronizeReduceFilenameFormat,
-        {
-          shards: outputShards,
-        }
-      )
-      for (let inputShard = 0; inputShard < inputShards; inputShard++) {
-        const shard = { index: inputShard, modulus: inputShards }
-        await args.fileSystem.removeFile(
-          shardedFilename(shuffleDirectory + synchronizeMapFilenameFormat, shard)
+  if (!options.unpatchMap && !options.unpatchReduce) {
+    for (let outputShard = 0; outputShard < args.outputShards; outputShard++) {
+      if (options.outputShardFilter && !options.outputShardFilter(outputShard)) continue
+      const shard = { index: outputShard, modulus: args.outputShards }
+      for (let inputShard = 0; inputShard < args.inputShards; inputShard++) {
+        await options.fileSystem.removeFile(
+          args.shuffleDirectory +
+            shardedFilename(shuffleFilenameFormat, shard) +
+            '.' +
+            shardedFilename(inputshardFilenameFormat, {
+              index: inputShard,
+              modulus: args.inputShards,
+            }) +
+            `.${args.shuffleFormat}`
         )
       }
     }
-    if (args.synchronizeMap) {
-      for (let outputShard = 0; outputShard < outputShards; outputShard++) {
-        const shard = { index: outputShard, modulus: outputShards }
-        await args.fileSystem.removeFile(
-          shardedFilename(shuffleDirectory + synchronizeReduceFilenameFormat, shard)
+  }
+
+  if (!options.outputShardFilter || options.outputShardFilter(0)) {
+    if (args.runReduce && options.synchronizeReduce) {
+      await waitForCompleteShardedInput(
+        options.fileSystem,
+        args.shuffleDirectory + synchronizeReduceFilenameFormat,
+        {
+          shards: args.outputShards,
+        }
+      )
+    } else if (options.unpatchReduce && args.runMap && options.synchronizeMap) {
+      await waitForCompleteShardedInput(
+        options.fileSystem,
+        args.shuffleDirectory + synchronizeMapFilenameFormat,
+        {
+          shards: args.inputShards,
+        }
+      )
+    }
+
+    if (args.runMap && options.synchronizeMap) {
+      for (let inputShard = 0; inputShard < args.inputShards; inputShard++) {
+        const shard = { index: inputShard, modulus: args.inputShards }
+        await options.fileSystem.removeFile(
+          shardedFilename(args.shuffleDirectory + synchronizeMapFilenameFormat, shard)
+        )
+      }
+    }
+    if (args.runReduce && options.synchronizeReduce) {
+      for (let outputShard = 0; outputShard < args.outputShards; outputShard++) {
+        const shard = { index: outputShard, modulus: args.outputShards }
+        await options.fileSystem.removeFile(
+          shardedFilename(args.shuffleDirectory + synchronizeReduceFilenameFormat, shard)
         )
       }
     }

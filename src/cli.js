@@ -14,6 +14,7 @@ const {
   DatabaseCopyInputType,
   DatabaseCopyOutputType,
   DatabaseCopySchema,
+  DatabaseCopyShardFunction,
 } = require('dbcp/dist/format')
 const dotenv = require('dotenv')
 const yargs = require('yargs')
@@ -180,6 +181,11 @@ async function main() {
             description: 'Output database port',
             type: 'string',
           },
+          outputShardFunction: {
+            choices: Object.values(DatabaseCopyShardFunction),
+            description: 'Output shard function',
+            type: 'string',
+          },
           outputShards: {
             description: 'Output shards',
             type: 'number',
@@ -205,12 +211,12 @@ async function main() {
             description: 'Reducer name',
             type: 'string',
           },
-          runMapper: {
-            description: 'Run mapper',
+          runMap: {
+            description: 'Run map',
             type: 'booleaan',
           },
-          runReducer: {
-            description: 'Run reducer',
+          runReduce: {
+            description: 'Run reduce',
             type: 'booleaan',
           },
           shuffleDirectory: {
@@ -224,6 +230,14 @@ async function main() {
           synchronizeReduce: {
             description: 'Write metadata files to synchronize multiple Reducers',
             type: 'boolean',
+          },
+          unpatchMap: {
+            description: 'Unpatch map',
+            type: 'booleaan',
+          },
+          unpatchReduce: {
+            description: 'Unpatch reduce',
+            type: 'booleaan',
           },
           verbose: {
             alias: 'v',
@@ -271,6 +285,7 @@ async function main() {
 
         try {
           await mapReduce(options)
+          returnValue = { inputPaths: args.inputPaths, outputPath: args.outputPath }
         } catch (err) {
           logger.info(err.message)
           if (args.verbose) {

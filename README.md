@@ -41,7 +41,7 @@ $ diff ./test-id-sorted-0002-of-0004.json.gz ./test/test-0002-of-0004.json.gz
 $ diff ./test-id-sorted-0003-of-0004.json.gz ./test/test-0003-of-0004.json.gz
 ```
 
-## Same example using arbitrary number of (potentially disitributed and parallel) workers
+## Same example using arbitrary number of workers
 
 ### Sort the supplied test data by `guid` using three workers
 

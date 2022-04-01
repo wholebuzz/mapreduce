@@ -59,8 +59,6 @@ export enum MapperImplementation {
 }
 
 export interface MapReduceJobConfig<Key, Value> extends DatabaseCopyInput, DatabaseCopyOutput {
-  autoSkipMapper?: boolean
-  autoSkipReducer?: boolean
   cleanup?: boolean
   combinerClass?: ReducerClass<Key, Value>
   configuration?: Configuration
@@ -76,11 +74,11 @@ export interface MapReduceJobConfig<Key, Value> extends DatabaseCopyInput, Datab
   outputPath: string
   outputShardFilter?: (index: number) => boolean
   reducerClass?: ReducerClass<Key, Value>
-  runMapper?: boolean
-  runReducer?: boolean
+  runMap?: boolean
+  runReduce?: boolean
   shuffleDirectory?: string
-  skipMapper?: boolean
-  skipReducer?: boolean
   synchronizeMap?: boolean
   synchronizeReduce?: boolean
+  unpatchMap?: boolean
+  unpatchReduce?: boolean
 }

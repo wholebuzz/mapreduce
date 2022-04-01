@@ -1,6 +1,6 @@
 {
   "name": "@wholebuzz/mapreduce",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Communication-free MapReduce for the 99%",
   "keywords": [
     "mapreduce"
@@ -32,7 +32,7 @@
     "dist/**/*"
   ],
   "dependencies": {
-    "dbcp": "^1.4.4",
+    "dbcp": "^1.4.5",
     "level": "^7.0.0",
     "parse-key-value-pair": "^1.1.2",
     "require-from-string": "^2.0.2",
