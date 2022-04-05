@@ -4,7 +4,7 @@
 
 ### MapReduce for the 99%
 
-See [https://github.com/wholebuzz/mapreduce-example](https://github.com/wholebuzz/mapreduce-example)
+For a full example, see [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 
 ## Example
 
@@ -58,6 +58,30 @@ $ for ((i = 0; i < 3; i++)); do yarn start \
   --workerIndex $i \
   -D keyProperty=guid &; done
 ```
+
+### Sort the supplied test data by `guid` using three containerized workers
+
+```console
+$ export MY_JOB_ID=`yarn --silent start job --new | tail -1 | jq -r ".jobid"`
+$ for ((i = 0; i < 3; i++)); do docker run -d -e "RUN_ARGS= \
+  --jobid $MY_JOB_ID \
+  --map IdentityMapper \
+  --reduce IdentityReducer \
+  --inputPaths /mnt-cwd/test/test-SSSS-of-NNNN.json.gz \
+  --outputPath /mnt-cwd/test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
+  --shuffleDirectory /mnt-cwd/ \
+  --outputShards 8 \
+  --numWorkers 3 \
+  --workerIndex $i \
+  -D keyProperty=guid" \
+  -v $PWD:/mnt-cwd \
+  -it wholebuzz/mapreduce; done
+```
+
+## Same example running in the cloud
+
+- Supply `s3://` or `gs://` URLs for `--inputPaths`, `--outputPath`, and `--shuffleDirectory`.
+- Use your preferred scheduler to start the workers (e.g. Airflow, Hadoop, Kubeflow, Kubernetes, EC2, or GCE). See [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 
 ## Technical overview
 

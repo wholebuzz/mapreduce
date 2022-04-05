@@ -75,6 +75,7 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
       inputSplits.push(path)
     }
   }
+  await args.fileSystem.ensureDirectory(shuffleDirectory)
 
   // map phase
   const runMap = args.runMap !== false && !args.unpatchMap
