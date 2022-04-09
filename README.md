@@ -6,6 +6,39 @@
 
 For a full example, see [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 
+`@wholebuzz/mapreduce` operates on databases of rows, usually expressed as `SSSS-of-NNNN` sharded flat files
+in the (gzipped) [JSON Lines](https://jsonlines.org/) format.
+
+The API and CLI mostly follow [Hadoop MapReduce](https://hadoop.apache.org/) except that each
+[MapContext](docs/interfaces/types.mapcontext.md) and [ReduceContext](docs/interfaces/types.reducecontext.md)
+uses `keyProperty` and `valueProperty` to dereference an underlying Object, instead of requiring that the data
+be shaped like `{ key: Key, value: Value }`.
+
+Custom Mappers and Reducers are typically compiled with [webpack](https://webpack.js.org/) and deployed to a
+cloud bucket. The path is then supplied to the Container or CLI (e.g. `--plugins s3://my-bucket/index.js`).
+See [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
+
+### [Mapper API](docs/interfaces/types.mapper.md)
+
+```typescript
+export interface Mapper<Key, Value> extends Base<Key, Value> {
+  map: (key: Key, value: Value, context: MapContext<Key, Value>) => void | Promise<void>
+}
+```
+
+### [Reducer API](docs/interfaces/types.reducer.md)
+
+```typescript
+export interface Reducer<Key, Value> extends Base<Key, Value> {
+  reduce: (key: Key, values: Value[], context: ReduceContext<Key, Value>) => void | Promise<void>
+}
+```
+
+### Sharding
+
+The default Shard Function is `identity` for numbers and `md5lsw` for string. MD5 is supported by MySQL, PostgreSQL,
+and SQLServer, allowing sharded database queries. However another hash (e.g. `fnv-plus`) may be preferred.
+
 ## Example
 
 ### Sort (and shard) the [supplied test data](https://github.com/wholebuzz/mapreduce/tree/main/test) by `guid`
@@ -160,3 +193,15 @@ of the stages of Shuffle and Reduce.
 - [[2](https://arxiv.org/pdf/0910.2582.pdf)] Rahn, Sanders, Singler. 2010. Scalable Distributed-Memory External Sorting
 - [[3](https://people.eng.unimelb.edu.au/zr/publications/DKE2012_ComMapReduce.pdf)] Ding, Wang, Xin. 2013. ComMapReduce: An Improvement of MapReduce with Lightweight Communication Mechanisms
 - [[4](https://iopscience.iop.org/article/10.1088/1757-899X/806/1/012040/pdf)] Chen. 2020. External Sorting Algorithm: State-of-the-Art and Future
+
+## API Reference
+
+### Modules
+
+- [cli](docs/modules/cli.md)
+- [leveldb](docs/modules/leveldb.md)
+- [mappers](docs/modules/mappers.md)
+- [mapreduce](docs/modules/mapreduce.md)
+- [plugins](docs/modules/plugins.md)
+- [reducers](docs/modules/reducers.md)
+- [types](docs/modules/types.md)
