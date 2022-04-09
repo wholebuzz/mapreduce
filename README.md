@@ -1,21 +1,23 @@
 # @wholebuzz/mapreduce [![image](https://img.shields.io/npm/v/@wholebuzz/mapreduce)](https://www.npmjs.com/package/@wholebuzz/mapreduce) [![test](https://github.com/wholebuzz/mapreduce/actions/workflows/test.yaml/badge.svg)](https://github.com/wholebuzz/mapreduce/actions/workflows/test.yaml)
 
-## Communication-free MapReduce
+## Communication-free MapReduce for the 99%
 
-### MapReduce for the 99%
+`@wholebuzz/mapreduce` is a novel [MapReduce](https://en.wikipedia.org/wiki/MapReduce) [[1](#references)]
+implementation trading shuffle latency for liberated scheduling. It works with your existing
+infrastructure.
 
 For a full example, see [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 
 `@wholebuzz/mapreduce` operates on databases of rows, usually expressed as `SSSS-of-NNNN` sharded flat files
-in the (gzipped) [JSON Lines](https://jsonlines.org/) format.
+in (gzipped) [JSON Lines](https://jsonlines.org/) format.
 
 The API and CLI mostly follow [Hadoop MapReduce](https://hadoop.apache.org/) except that each
 [MapContext](docs/interfaces/types.mapcontext.md) and [ReduceContext](docs/interfaces/types.reducecontext.md)
-uses `keyProperty` and `valueProperty` to dereference an underlying Object, instead of requiring that the data
+use `keyProperty` and `valueProperty` to dereference an underlying Object, instead of requiring the data to
 be shaped like `{ key: Key, value: Value }`.
 
 Custom Mappers and Reducers are typically compiled with [webpack](https://webpack.js.org/) and deployed to a
-cloud bucket. The path is then supplied to the Container or CLI (e.g. `--plugins s3://my-bucket/index.js`).
+cloud storage bucket. The path is then supplied to the Container or CLI (e.g. `--plugins s3://my-bucket/index.js`).
 See [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 
 ### [Mapper API](docs/interfaces/types.mapper.md)
@@ -36,8 +38,9 @@ export interface Reducer<Key, Value> extends Base<Key, Value> {
 
 ### Sharding
 
-The default Shard Function is `identity` for numbers and `md5lsw` for string. MD5 is supported by MySQL, PostgreSQL,
-and SQLServer, allowing sharded database queries. However another hash (e.g. `fnv-plus`) may be preferred.
+The default Shard Function is modulo `identity` for numbers and `md5lsw` for string. MD5 is supported by
+MySQL, PostgreSQL, and SQLServer, allowing sharded database queries. However another hash (e.g. `fnv-plus`)
+may be preferred.
 
 ## Example
 
