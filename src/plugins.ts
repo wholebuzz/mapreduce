@@ -80,6 +80,10 @@ export function parseConfiguration(input?: string | string[]) {
   return ret
 }
 
+export function getSubPropertyWithPath(x: Record<string, any>, path?: string) {
+  return getSubProperty(x, path?.split('.'))
+}
+
 export function getSubProperty(x: Record<string, any>, path?: string[]): any {
   for (const key of path ?? []) {
     x = x[key]
@@ -88,8 +92,15 @@ export function getSubProperty(x: Record<string, any>, path?: string[]): any {
   return x
 }
 
-export function getSubPropertyWithPath(x: Record<string, any>, path?: string) {
-  return getSubProperty(x, path?.split('.'))
+export function setSubProperty(x: Record<string, any>, path: string[], value: any) {
+  const input = x
+  for (let i = 0; i < path.length - 1; i++) {
+    const key = path[i]
+    if (!x[key]) x[key] = {}
+    x = x[key]
+  }
+  x[path[path.length - 1]] = value
+  return input
 }
 
 export function getSubPropertyAccessor(path: string): (_: Record<string, any>) => any {
@@ -100,6 +111,21 @@ export function getSubPropertyAccessor(path: string): (_: Record<string, any>) =
     return (x) => x[nested[0]]
   } else {
     return (x) => getSubProperty(x, nested)
+  }
+}
+
+export function getSubPropertySetter(path: string): (_: Record<string, any>, value: any) => any {
+  const nested = path?.split('.')
+  if (nested.length === 0) {
+    throw new Error()
+  } else if (nested.length === 1) {
+    return (x, value) => {
+      const key = nested[0]
+      if (key) x[key] = value
+      return x
+    }
+  } else {
+    return (x, value) => setSubProperty(x, nested, value)
   }
 }
 

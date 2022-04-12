@@ -15,8 +15,9 @@ import {
   getItemValueAccessor,
   mappedObject,
   mapTransform,
+  unknownWriteProperty,
 } from './mapreduce'
-import { formatNumberForUtf8Sort, getObjectClassName } from './plugins'
+import { formatNumberForUtf8Sort, getObjectClassName, getSubPropertySetter } from './plugins'
 import { Configuration, Item, Mapper, MapReduceJobConfig, ReduceContext, Reducer } from './types'
 
 export async function runMapPhaseWithLevelDb<Key, Value>(
@@ -44,7 +45,10 @@ export async function runMapPhaseWithLevelDb<Key, Value>(
     }
     if (args.logger) {
       args.logger.info(
-        `runMapPhaseWithLevelDb ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(options)}`
+        `runMapPhaseWithLevelDb ${getObjectClassName(mapper) || 'map'} ${JSON.stringify({
+          ...options,
+          fileSystem: {},
+        })}`
       )
     }
     await dbcp({
@@ -55,6 +59,7 @@ export async function runMapPhaseWithLevelDb<Key, Value>(
         transformInputObjectStream: () =>
           mapTransform(mapper, {
             configuration: args.configuration,
+            logger: args.logger,
           }),
       })),
       outputFormat: DatabaseCopyFormat.object,
@@ -111,6 +116,8 @@ export async function combineWithLevelDb<Key, Value>(
   const valueProperty = configuration.valueProperty ?? defaultValueProperty
   const getItemKey = getItemValueAccessor(keyProperty)
   const getItemValue = getItemValueAccessor(valueProperty)
+  const setItemKey = keyProperty ? getSubPropertySetter(keyProperty) : undefined
+  const setItemValue = getSubPropertySetter(valueProperty || unknownWriteProperty)
   const context: ReduceContext<Key, Value> = {
     configuration,
     currentItem: [],
@@ -120,7 +127,7 @@ export async function combineWithLevelDb<Key, Value>(
     valueProperty,
     write: (key: Key, value: any) => {
       if (key !== context.currentKey) throw new Error(`Combiner can't change key`)
-      combinerOutput.push(mappedObject(key, value, context, args?.transform))
+      combinerOutput.push(mappedObject(key, value, setItemKey, setItemValue, args?.transform))
     },
   }
 

@@ -1,7 +1,9 @@
+import { DirectoryEntry } from '@wholebuzz/fs/lib/fs'
 import { writeJSON } from '@wholebuzz/fs/lib/json'
-import { handleAsyncFunctionCallback } from '@wholebuzz/fs/lib/stream'
+import { handleAsyncFunctionCallback, streamFilter } from '@wholebuzz/fs/lib/stream'
 import {
   isShardedFilename,
+  Logger,
   readShardFilenames,
   shardedFilename,
   waitForCompleteShardedInput,
@@ -10,11 +12,16 @@ import { assignDatabaseCopyOutputProperties, DatabaseCopyOptions, dbcp } from 'd
 import { DatabaseCopyShardFunction, inputIsSqlDatabase } from 'dbcp/dist/format'
 import { updateObjectProperties } from 'dbcp/dist/util'
 import { Transform } from 'stream'
+import { pumpReadable } from 'tree-stream'
 import { runMapPhaseWithLevelDb } from './leveldb'
-import { factoryConstruct, getObjectClassName, getSubPropertyAccessor } from './plugins'
+import {
+  factoryConstruct,
+  getObjectClassName,
+  getSubPropertyAccessor,
+  getSubPropertySetter,
+} from './plugins'
 import {
   Configuration,
-  Context,
   Item,
   MapContext,
   Mapper,
@@ -26,7 +33,7 @@ import {
 
 export const defaultDiretory = './'
 export const defaultKeyProperty = 'key'
-export const defaultValueProperty = ''
+export const defaultValueProperty = '' // Blank means the underlying object itself
 export const unknownWriteProperty = 'value'
 export const defaultShuffleFormat = 'jsonl.gz'
 export const shuffleFilenameFormat = 'shuffle-SSSS-of-NNNN'
@@ -71,6 +78,16 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
       for (let i = 0; i < numShards; i++) {
         inputSplits.push(shardedFilename(args.inputPaths[0], { index: i, modulus: numShards }))
       }
+    } else if (path.endsWith('/')) {
+      const directoryStream = await args.fileSystem.readDirectoryStream(path, { recursive: true })
+      await pumpReadable(
+        directoryStream.pipe(
+          streamFilter((file: DirectoryEntry) => {
+            inputSplits.push(file.url)
+          })
+        ),
+        undefined
+      )
     } else {
       inputSplits.push(path)
     }
@@ -220,24 +237,22 @@ export function getMapperImplementation(type?: MapperImplementation, hasCombiner
 export const immutableContext = (configuration?: Configuration) => ({
   configuration: configuration ?? {},
   currentItem: {},
-  keyProperty: '',
-  valueProperty: '',
+  keyProperty: configuration?.keyProperty ?? defaultKeyProperty,
+  valueProperty: configuration?.valueProperty ?? defaultValueProperty,
   write: () => {
     throw new Error()
   },
 })
 
-export function mappedObject<Key, Value>(
+export function mappedObject<Key, _Value>(
   key: Key,
   value: any,
-  context: Context<Key, Value>,
+  keySetter: ((output: Record<string, any>, value: any) => void) | undefined,
+  nonObjectValueSetter: (output: Record<string, any>, value: any) => void,
   transform?: (value: Item) => Item
 ): Item {
-  const output: Item =
-    typeof value === 'object'
-      ? { ...value }
-      : { [context.valueProperty || unknownWriteProperty]: value }
-  if (context.keyProperty) output[context.keyProperty] = key
+  const output: Item = typeof value === 'object' ? { ...value } : nonObjectValueSetter({}, value)
+  if (keySetter) keySetter(output, key)
   return transform ? transform(output) : output
 }
 
@@ -245,13 +260,20 @@ export function mapTransform<Key, Value>(
   mapper: Mapper<Key, Value>,
   args?: {
     configuration?: Configuration
+    logger?: Logger
     transform?: (value: Item) => Item
   }
 ) {
   let transform!: Transform
+  let warnedReadFalsyKey = false
+  let warnedReadFalsyValue = false
+  let warnedWroteFalsyKey = false
+  let warnedWroteFalsyValue = false
   const configuration = args?.configuration ?? {}
   const keyProperty = configuration?.keyProperty ?? defaultKeyProperty
   const valueProperty = configuration?.valueProperty ?? defaultValueProperty
+  const setItemKey = keyProperty ? getSubPropertySetter(keyProperty) : undefined
+  const setItemValue = getSubPropertySetter(valueProperty || unknownWriteProperty)
   const context: MapContext<Key, Value> = {
     configuration,
     currentItem: {},
@@ -260,8 +282,17 @@ export function mapTransform<Key, Value>(
     inputValueProperty: configuration.inputValueProperty ?? valueProperty,
     keyProperty,
     valueProperty,
-    write: (key: Key, value: any) =>
-      transform.push(mappedObject(key, value, context, args?.transform)),
+    write: (key: Key, value: any) => {
+      if (!key && !warnedWroteFalsyKey) {
+        warnedWroteFalsyKey = true
+        if (args?.logger) args.logger.error('WARNING: Wrote falsy Mapper key')
+      }
+      if (!value && !warnedWroteFalsyValue) {
+        warnedWroteFalsyValue = true
+        if (args?.logger) args.logger.error('WARNING: Wrote falsy Mapper value')
+      }
+      transform.push(mappedObject(key, value, setItemKey, setItemValue, args?.transform))
+    },
   }
   const getItemKey = getItemKeyAccessor(context.inputKeyProperty)
   const getItemValue = getItemValueAccessor(context.inputValueProperty)
@@ -271,6 +302,14 @@ export function mapTransform<Key, Value>(
       context.currentItem = data
       context.currentKey = getItemKey(context.currentItem)
       context.currentValue = getItemValue(context.currentItem)
+      if (!context.currentKey && !warnedReadFalsyKey) {
+        warnedReadFalsyKey = true
+        if (args?.logger) args.logger.error('WARNING: Read falsy Mapper key')
+      }
+      if (!context.currentValue && !warnedReadFalsyValue) {
+        warnedReadFalsyValue = true
+        if (args?.logger) args.logger.error('WARNING: Read falsy Mapper value')
+      }
       const running = mapper.map(context.currentKey!, context.currentValue, context)
       handleAsyncFunctionCallback(running, callback)
     },
@@ -280,19 +319,30 @@ export function mapTransform<Key, Value>(
 
 export function reduceTransform<Key, Value>(
   reducer: Reducer<Key, Value>,
-  args: { configuration?: Configuration; transform?: (value: Item) => Item }
+  args: { configuration?: Configuration; logger?: Logger; transform?: (value: Item) => Item }
 ) {
   let transform!: Transform
+  let warnedReadFalsyKey = false
+  let warnedReadFalsyValue = false
+  let warnedWroteFalsyValue = false
   const configuration = args?.configuration ?? {}
+  const keyProperty = configuration.keyProperty ?? defaultKeyProperty
+  const valueProperty = configuration.valueProperty ?? defaultValueProperty
+  const setItemKey = keyProperty ? getSubPropertySetter(keyProperty) : undefined
+  const setItemValue = getSubPropertySetter(valueProperty || unknownWriteProperty)
   const context: ReduceContext<Key, Value> = {
     configuration,
     currentItem: [],
     currentValue: [],
-    keyProperty: configuration.keyProperty ?? defaultKeyProperty,
-    valueProperty: configuration.valueProperty ?? defaultValueProperty,
+    keyProperty,
+    valueProperty,
     write: (key: Key, value: any) => {
       if (key !== context.currentKey) throw new Error(`Reducer can't change key`)
-      transform.push(mappedObject(key, value, context, args?.transform))
+      if (!value && !warnedWroteFalsyValue) {
+        warnedWroteFalsyValue = true
+        if (args?.logger) args.logger.error('WARNING: Wrote falsy Reducer value')
+      }
+      transform.push(mappedObject(key, value, setItemKey, setItemValue, args?.transform))
     },
   }
   const getItemKey = getItemKeyAccessor(context.keyProperty)
@@ -305,6 +355,14 @@ export function reduceTransform<Key, Value>(
         : [data]
       context.currentKey = getItemKey(context.currentItem[0])
       context.currentValue = context.currentItem.map(getItemValue)
+      if (!context.currentKey && !warnedReadFalsyKey) {
+        warnedReadFalsyKey = true
+        if (args?.logger) args.logger.error('WARNING: Read falsy Reducer key')
+      }
+      if ((!context.currentValue.length || !context.currentValue[0]) && !warnedReadFalsyValue) {
+        warnedReadFalsyValue = true
+        if (args?.logger) args.logger.error('WARNING: Read falsy Reducer value')
+      }
       const running = reducer.reduce(context.currentKey!, context.currentValue, context)
       handleAsyncFunctionCallback(running, callback)
     },
@@ -324,13 +382,17 @@ export async function runReducePhase<Key, Value>(
   }
   if (args.logger) {
     args.logger.info(
-      `runReducePhase ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify(options)}`
+      `runReducePhase ${getObjectClassName(reducer) || 'reduce'} ${JSON.stringify({
+        ...options,
+        fileSystem: {},
+      })}`
     )
   }
   await dbcp({
     ...options,
     fileSystem: args.fileSystem,
-    transformObjectStream: () => reduceTransform(reducer, { configuration: args.configuration }),
+    transformObjectStream: () =>
+      reduceTransform(reducer, { configuration: args.configuration, logger: args.logger }),
   })
 }
 
@@ -354,9 +416,10 @@ export async function runMapPhaseWithExternalSorting<Key, Value>(
   }
   if (args.logger) {
     args.logger.info(
-      `runMapPhaseWithExternalSorting ${getObjectClassName(mapper) || 'map'} ${JSON.stringify(
-        options
-      )}`
+      `runMapPhaseWithExternalSorting ${getObjectClassName(mapper) || 'map'} ${JSON.stringify({
+        ...options,
+        fileSystem: {},
+      })}`
     )
   }
   await dbcp({
@@ -367,6 +430,7 @@ export async function runMapPhaseWithExternalSorting<Key, Value>(
       transformInputObjectStream: () =>
         mapTransform(mapper, {
           configuration: args.configuration,
+          logger: args.logger,
         }),
     })),
   })

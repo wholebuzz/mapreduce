@@ -1,6 +1,6 @@
 {
   "name": "@wholebuzz/mapreduce",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Communication-free MapReduce for the 99%",
   "keywords": [
     "mapreduce"
@@ -17,6 +17,7 @@
     "build": "tsc -b .",
     "clean": "tsc -b . --clean",
     "start": "node dist/cli.js",
+    "mapreduce": "node dist/cli.js",
     "docs": "typedoc --disableOutputCheck && rm -rf docs/README.md && ./scripts/updateReadmeApiReference.sh",
     "test": "jest --runInBand --ci --passWithNoTests --detectOpenHandles --forceExit",
     "test:coverage": "jest --runInBand --ci --passWithNoTests --coverage --no-cache",
@@ -32,7 +33,7 @@
     "dist/**/*"
   ],
   "dependencies": {
-    "dbcp": "^1.4.5",
+    "dbcp": "^1.4.6",
     "level": "^7.0.0",
     "parse-key-value-pair": "^1.1.2",
     "require-from-string": "^2.0.2",

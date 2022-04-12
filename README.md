@@ -23,7 +23,7 @@ See [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 ### [Mapper API](docs/interfaces/types.mapper.md)
 
 ```typescript
-export interface Mapper<Key, Value> extends Base<Key, Value> {
+interface Mapper<Key, Value> extends Base<Key, Value> {
   map: (key: Key, value: Value, context: MapContext<Key, Value>) => void | Promise<void>
 }
 ```
@@ -31,7 +31,7 @@ export interface Mapper<Key, Value> extends Base<Key, Value> {
 ### [Reducer API](docs/interfaces/types.reducer.md)
 
 ```typescript
-export interface Reducer<Key, Value> extends Base<Key, Value> {
+interface Reducer<Key, Value> extends Base<Key, Value> {
   reduce: (key: Key, values: Value[], context: ReduceContext<Key, Value>) => void | Promise<void>
 }
 ```

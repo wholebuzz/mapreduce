@@ -6,6 +6,7 @@ import type { Factory } from './plugins'
 export interface Item {
   [key: string]: any
 }
+
 export type MapperClass<Key, Value> = Factory<Mapper<Key, Value>>
 export type ReducerClass<Key, Value> = Factory<Reducer<Key, Value>>
 
