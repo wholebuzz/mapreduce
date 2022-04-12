@@ -22,11 +22,13 @@
 - [getObjectClassName](plugins.md#getobjectclassname)
 - [getSubProperty](plugins.md#getsubproperty)
 - [getSubPropertyAccessor](plugins.md#getsubpropertyaccessor)
+- [getSubPropertySetter](plugins.md#getsubpropertysetter)
 - [getSubPropertyWithPath](plugins.md#getsubpropertywithpath)
 - [loadPlugin](plugins.md#loadplugin)
 - [loadPluginFile](plugins.md#loadpluginfile)
 - [loadPluginFiles](plugins.md#loadpluginfiles)
 - [parseConfiguration](plugins.md#parseconfiguration)
+- [setSubProperty](plugins.md#setsubproperty)
 
 ## Type aliases
 
@@ -88,7 +90,7 @@ Defined in: [src/plugins.ts:9](https://github.com/wholebuzz/mapreduce/blob/maste
 
 • `Const` **maxIntegerDigits**: *number*
 
-Defined in: [src/plugins.ts:107](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L107)
+Defined in: [src/plugins.ts:133](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L133)
 
 ___
 
@@ -135,7 +137,7 @@ ___
 
 **Returns:** *string*
 
-Defined in: [src/plugins.ts:109](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L109)
+Defined in: [src/plugins.ts:135](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L135)
 
 ___
 
@@ -168,7 +170,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/plugins.ts:83](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L83)
+Defined in: [src/plugins.ts:87](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L87)
 
 ___
 
@@ -184,7 +186,23 @@ ___
 
 **Returns:** (`_`: *Record*<string, any\>) => *any*
 
-Defined in: [src/plugins.ts:95](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L95)
+Defined in: [src/plugins.ts:106](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L106)
+
+___
+
+### getSubPropertySetter
+
+▸ **getSubPropertySetter**(`path`: *string*): *function*
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | *string* |
+
+**Returns:** (`_`: *Record*<string, any\>, `value`: *any*) => *any*
+
+Defined in: [src/plugins.ts:117](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L117)
 
 ___
 
@@ -201,7 +219,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/plugins.ts:91](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L91)
+Defined in: [src/plugins.ts:83](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L83)
 
 ___
 
@@ -290,3 +308,21 @@ ___
 **Returns:** *Record*<string, any\>
 
 Defined in: [src/plugins.ts:59](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L59)
+
+___
+
+### setSubProperty
+
+▸ **setSubProperty**(`x`: *Record*<string, any\>, `path`: *string*[], `value`: *any*): *Record*<string, any\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `x` | *Record*<string, any\> |
+| `path` | *string*[] |
+| `value` | *any* |
+
+**Returns:** *Record*<string, any\>
+
+Defined in: [src/plugins.ts:95](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L95)

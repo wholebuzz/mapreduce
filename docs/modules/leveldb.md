@@ -36,7 +36,7 @@
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/leveldb.ts:99](https://github.com/wholebuzz/mapreduce/blob/master/src/leveldb.ts#L99)
+Defined in: [src/leveldb.ts:104](https://github.com/wholebuzz/mapreduce/blob/master/src/leveldb.ts#L104)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/leveldb.ts:22](https://github.com/wholebuzz/mapreduce/blob/master/src/leveldb.ts#L22)
+Defined in: [src/leveldb.ts:23](https://github.com/wholebuzz/mapreduce/blob/master/src/leveldb.ts#L23)
 
 ___
 
@@ -78,4 +78,4 @@ ___
 
 **Returns:** ReadableStreamTree
 
-Defined in: [src/leveldb.ts:153](https://github.com/wholebuzz/mapreduce/blob/master/src/leveldb.ts#L153)
+Defined in: [src/leveldb.ts:160](https://github.com/wholebuzz/mapreduce/blob/master/src/leveldb.ts#L160)

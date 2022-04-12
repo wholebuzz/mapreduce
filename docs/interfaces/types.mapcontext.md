@@ -39,7 +39,7 @@
 
 Inherited from: [Context](types.context.md).[configuration](types.context.md#configuration)
 
-Defined in: [src/types.ts:28](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L28)
+Defined in: [src/types.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L29)
 
 ___
 
@@ -47,7 +47,7 @@ ___
 
 • **currentItem**: [*Item*](types.item.md)
 
-Defined in: [src/types.ts:36](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L36)
+Defined in: [src/types.ts:37](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L37)
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 Inherited from: [Context](types.context.md).[currentKey](types.context.md#currentkey)
 
-Defined in: [src/types.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L29)
+Defined in: [src/types.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L30)
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 • **currentValue**: Value
 
-Defined in: [src/types.ts:37](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L37)
+Defined in: [src/types.ts:38](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L38)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 • `Optional` **inputKeyProperty**: *string*
 
-Defined in: [src/types.ts:38](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L38)
+Defined in: [src/types.ts:39](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L39)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 • `Optional` **inputValueProperty**: *string*
 
-Defined in: [src/types.ts:39](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L39)
+Defined in: [src/types.ts:40](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L40)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 Inherited from: [Context](types.context.md).[keyProperty](types.context.md#keyproperty)
 
-Defined in: [src/types.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L30)
+Defined in: [src/types.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L31)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 Inherited from: [Context](types.context.md).[valueProperty](types.context.md#valueproperty)
 
-Defined in: [src/types.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L31)
+Defined in: [src/types.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L32)
 
 ___
 
@@ -124,4 +124,4 @@ ___
 
 Inherited from: [Context](types.context.md).[write](types.context.md#write)
 
-Defined in: [src/types.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L32)
+Defined in: [src/types.ts:33](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L33)

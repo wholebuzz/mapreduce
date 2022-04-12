@@ -41,7 +41,7 @@
 
 • `Const` **defaultDiretory**: ``"./"``= './'
 
-Defined in: [src/mapreduce.ts:27](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L27)
+Defined in: [src/mapreduce.ts:34](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L34)
 
 ___
 
@@ -49,7 +49,7 @@ ___
 
 • `Const` **defaultKeyProperty**: ``"key"``= 'key'
 
-Defined in: [src/mapreduce.ts:28](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L28)
+Defined in: [src/mapreduce.ts:35](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L35)
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 • `Const` **defaultShuffleFormat**: ``"jsonl.gz"``= 'jsonl.gz'
 
-Defined in: [src/mapreduce.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L31)
+Defined in: [src/mapreduce.ts:38](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L38)
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 • `Const` **defaultValueProperty**: ``""``= ''
 
-Defined in: [src/mapreduce.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L29)
+Defined in: [src/mapreduce.ts:36](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L36)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 • `Const` **inputshardFilenameFormat**: ``"inputshard-SSSS-of-NNNN"``= 'inputshard-SSSS-of-NNNN'
 
-Defined in: [src/mapreduce.ts:33](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L33)
+Defined in: [src/mapreduce.ts:40](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L40)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 • `Const` **localTempDirectoryPrefix**: ``"maptmp"``= 'maptmp'
 
-Defined in: [src/mapreduce.ts:36](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L36)
+Defined in: [src/mapreduce.ts:43](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L43)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 • `Const` **shuffleFilenameFormat**: ``"shuffle-SSSS-of-NNNN"``= 'shuffle-SSSS-of-NNNN'
 
-Defined in: [src/mapreduce.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L32)
+Defined in: [src/mapreduce.ts:39](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L39)
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 • `Const` **synchronizeMapFilenameFormat**: ``"map-done-SSSS-of-NNNN.json"``= 'map-done-SSSS-of-NNNN.json'
 
-Defined in: [src/mapreduce.ts:34](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L34)
+Defined in: [src/mapreduce.ts:41](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L41)
 
 ___
 
@@ -105,7 +105,7 @@ ___
 
 • `Const` **synchronizeReduceFilenameFormat**: ``"reduce-done-SSSS-of-NNNN.json"``= 'reduce-done-SSSS-of-NNNN.json'
 
-Defined in: [src/mapreduce.ts:35](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L35)
+Defined in: [src/mapreduce.ts:42](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L42)
 
 ___
 
@@ -113,7 +113,7 @@ ___
 
 • `Const` **unknownWriteProperty**: ``"value"``= 'value'
 
-Defined in: [src/mapreduce.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L30)
+Defined in: [src/mapreduce.ts:37](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L37)
 
 ## Functions
 
@@ -129,7 +129,7 @@ Defined in: [src/mapreduce.ts:30](https://github.com/wholebuzz/mapreduce/blob/ma
 
 **Returns:** (`_`: *Record*<string, any\>) => *any*
 
-Defined in: [src/mapreduce.ts:459](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L459)
+Defined in: [src/mapreduce.ts:523](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L523)
 
 ___
 
@@ -145,7 +145,7 @@ ___
 
 **Returns:** (`_`: *Record*<string, any\>) => *any*
 
-Defined in: [src/mapreduce.ts:462](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L462)
+Defined in: [src/mapreduce.ts:526](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L526)
 
 ___
 
@@ -162,7 +162,7 @@ ___
 
 **Returns:** <Key, Value\>(`mapper`: [*Mapper*](../interfaces/types.mapper.md)<Key, Value\>, `combiner`: [*Reducer*](../interfaces/types.reducer.md)<Key, Value\> \| *undefined*, `args`: [*MapReduceJobConfig*](../interfaces/types.mapreducejobconfig.md)<Key, Value\>, `options`: DatabaseCopyOptions) => *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:209](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L209)
+Defined in: [src/mapreduce.ts:226](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L226)
 
 ___
 
@@ -179,7 +179,7 @@ ___
 
 **Returns:** *undefined* \| (`index`: *number*) => *boolean*
 
-Defined in: [src/mapreduce.ts:455](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L455)
+Defined in: [src/mapreduce.ts:519](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L519)
 
 ___
 
@@ -195,7 +195,7 @@ ___
 
 **Returns:** *string*
 
-Defined in: [src/mapreduce.ts:447](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L447)
+Defined in: [src/mapreduce.ts:511](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L511)
 
 ___
 
@@ -212,7 +212,7 @@ ___
 
 **Returns:** *string*
 
-Defined in: [src/mapreduce.ts:451](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L451)
+Defined in: [src/mapreduce.ts:515](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L515)
 
 ___
 
@@ -236,7 +236,7 @@ ___
 | `valueProperty` | *string* |
 | `write` | () => *never* |
 
-Defined in: [src/mapreduce.ts:220](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L220)
+Defined in: [src/mapreduce.ts:237](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L237)
 
 ___
 
@@ -259,13 +259,13 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:38](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L38)
+Defined in: [src/mapreduce.ts:45](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L45)
 
 ___
 
 ### mapTransform
 
-▸ **mapTransform**<Key, Value\>(`mapper`: [*Mapper*](../interfaces/types.mapper.md)<Key, Value\>, `args?`: { `configuration?`: [*Configuration*](../interfaces/types.configuration.md) ; `transform?`: (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md)  }): *Transform*
+▸ **mapTransform**<Key, Value\>(`mapper`: [*Mapper*](../interfaces/types.mapper.md)<Key, Value\>, `args?`: { `configuration?`: [*Configuration*](../interfaces/types.configuration.md) ; `logger?`: Logger ; `transform?`: (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md)  }): *Transform*
 
 #### Type parameters
 
@@ -281,24 +281,25 @@ ___
 | `mapper` | [*Mapper*](../interfaces/types.mapper.md)<Key, Value\> |
 | `args?` | *object* |
 | `args.configuration?` | [*Configuration*](../interfaces/types.configuration.md) |
+| `args.logger?` | Logger |
 | `args.transform?` | (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md) |
 
 **Returns:** *Transform*
 
-Defined in: [src/mapreduce.ts:244](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L244)
+Defined in: [src/mapreduce.ts:259](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L259)
 
 ___
 
 ### mappedObject
 
-▸ **mappedObject**<Key, Value\>(`key`: Key, `value`: *any*, `context`: [*Context*](../interfaces/types.context.md)<Key, Value\>, `transform?`: (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md)): [*Item*](../interfaces/types.item.md)
+▸ **mappedObject**<Key, _Value\>(`key`: Key, `value`: *any*, `keySetter`: (`output`: *Record*<string, any\>, `value`: *any*) => *void* \| *undefined*, `nonObjectValueSetter`: (`output`: *Record*<string, any\>, `value`: *any*) => *void*, `transform?`: (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md)): [*Item*](../interfaces/types.item.md)
 
 #### Type parameters
 
 | Name |
 | :------ |
 | `Key` |
-| `Value` |
+| `_Value` |
 
 #### Parameters
 
@@ -306,12 +307,13 @@ ___
 | :------ | :------ |
 | `key` | Key |
 | `value` | *any* |
-| `context` | [*Context*](../interfaces/types.context.md)<Key, Value\> |
+| `keySetter` | (`output`: *Record*<string, any\>, `value`: *any*) => *void* \| *undefined* |
+| `nonObjectValueSetter` | (`output`: *Record*<string, any\>, `value`: *any*) => *void* |
 | `transform?` | (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md) |
 
 **Returns:** [*Item*](../interfaces/types.item.md)
 
-Defined in: [src/mapreduce.ts:230](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L230)
+Defined in: [src/mapreduce.ts:247](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L247)
 
 ___
 
@@ -327,13 +329,13 @@ ___
 
 **Returns:** *string*
 
-Defined in: [src/mapreduce.ts:443](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L443)
+Defined in: [src/mapreduce.ts:507](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L507)
 
 ___
 
 ### reduceTransform
 
-▸ **reduceTransform**<Key, Value\>(`reducer`: [*Reducer*](../interfaces/types.reducer.md)<Key, Value\>, `args`: { `configuration?`: [*Configuration*](../interfaces/types.configuration.md) ; `transform?`: (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md)  }): *Transform*
+▸ **reduceTransform**<Key, Value\>(`reducer`: [*Reducer*](../interfaces/types.reducer.md)<Key, Value\>, `args`: { `configuration?`: [*Configuration*](../interfaces/types.configuration.md) ; `logger?`: Logger ; `transform?`: (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md)  }): *Transform*
 
 #### Type parameters
 
@@ -349,11 +351,12 @@ ___
 | `reducer` | [*Reducer*](../interfaces/types.reducer.md)<Key, Value\> |
 | `args` | *object* |
 | `args.configuration?` | [*Configuration*](../interfaces/types.configuration.md) |
+| `args.logger?` | Logger |
 | `args.transform?` | (`value`: [*Item*](../interfaces/types.item.md)) => [*Item*](../interfaces/types.item.md) |
 
 **Returns:** *Transform*
 
-Defined in: [src/mapreduce.ts:281](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L281)
+Defined in: [src/mapreduce.ts:320](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L320)
 
 ___
 
@@ -383,7 +386,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:375](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L375)
+Defined in: [src/mapreduce.ts:439](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L439)
 
 ___
 
@@ -409,7 +412,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:337](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L337)
+Defined in: [src/mapreduce.ts:399](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L399)
 
 ___
 
@@ -434,4 +437,4 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:315](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L315)
+Defined in: [src/mapreduce.ts:373](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L373)

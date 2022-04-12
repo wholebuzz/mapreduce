@@ -88,7 +88,7 @@
 
 • `Optional` **cleanup**: *boolean*
 
-Defined in: [src/types.ts:62](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L62)
+Defined in: [src/types.ts:63](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L63)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 • `Optional` **combinerClass**: [*ReducerClass*](../modules/types.md#reducerclass)<Key, Value\>
 
-Defined in: [src/types.ts:63](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L63)
+Defined in: [src/types.ts:64](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L64)
 
 ___
 
@@ -104,7 +104,7 @@ ___
 
 • `Optional` **configuration**: [*Configuration*](types.configuration.md)
 
-Defined in: [src/types.ts:64](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L64)
+Defined in: [src/types.ts:65](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L65)
 
 ___
 
@@ -112,7 +112,7 @@ ___
 
 • **fileSystem**: *FileSystem*
 
-Defined in: [src/types.ts:65](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L65)
+Defined in: [src/types.ts:66](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L66)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputConnection
 
-Defined in: node_modules/dbcp/dist/index.d.ts:28
+Defined in: node_modules/dbcp/dist/index.d.ts:27
 
 ___
 
@@ -132,7 +132,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputElasticSearch
 
-Defined in: node_modules/dbcp/dist/index.d.ts:29
+Defined in: node_modules/dbcp/dist/index.d.ts:28
 
 ___
 
@@ -142,17 +142,17 @@ ___
 
 Inherited from: DatabaseCopyInput.inputFiles
 
-Defined in: node_modules/dbcp/dist/index.d.ts:31
+Defined in: node_modules/dbcp/dist/index.d.ts:30
 
 ___
 
 ### inputFormat
 
-• `Optional` **inputFormat**: DatabaseCopyFormat
+• `Optional` **inputFormat**: DatabaseCopyFormat \| DatabaseCopyTransformFactory
 
 Inherited from: DatabaseCopyInput.inputFormat
 
-Defined in: node_modules/dbcp/dist/index.d.ts:30
+Defined in: node_modules/dbcp/dist/index.d.ts:29
 
 ___
 
@@ -162,7 +162,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputHost
 
-Defined in: node_modules/dbcp/dist/index.d.ts:32
+Defined in: node_modules/dbcp/dist/index.d.ts:31
 
 ___
 
@@ -172,7 +172,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputKnex
 
-Defined in: node_modules/dbcp/dist/index.d.ts:36
+Defined in: node_modules/dbcp/dist/index.d.ts:35
 
 ___
 
@@ -182,7 +182,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputLeveldb
 
-Defined in: node_modules/dbcp/dist/index.d.ts:33
+Defined in: node_modules/dbcp/dist/index.d.ts:32
 
 ___
 
@@ -192,7 +192,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputMongodb
 
-Defined in: node_modules/dbcp/dist/index.d.ts:34
+Defined in: node_modules/dbcp/dist/index.d.ts:33
 
 ___
 
@@ -202,7 +202,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputName
 
-Defined in: node_modules/dbcp/dist/index.d.ts:35
+Defined in: node_modules/dbcp/dist/index.d.ts:34
 
 ___
 
@@ -210,7 +210,7 @@ ___
 
 • `Optional` **inputOptions**: DatabaseCopyInput
 
-Defined in: [src/types.ts:69](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L69)
+Defined in: [src/types.ts:70](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L70)
 
 ___
 
@@ -220,7 +220,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputPassword
 
-Defined in: node_modules/dbcp/dist/index.d.ts:37
+Defined in: node_modules/dbcp/dist/index.d.ts:36
 
 ___
 
@@ -228,7 +228,7 @@ ___
 
 • **inputPaths**: *string*[]
 
-Defined in: [src/types.ts:67](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L67)
+Defined in: [src/types.ts:68](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L68)
 
 ___
 
@@ -238,7 +238,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputPort
 
-Defined in: node_modules/dbcp/dist/index.d.ts:45
+Defined in: node_modules/dbcp/dist/index.d.ts:44
 
 ___
 
@@ -248,7 +248,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputShardBy
 
-Defined in: node_modules/dbcp/dist/index.d.ts:38
+Defined in: node_modules/dbcp/dist/index.d.ts:37
 
 ___
 
@@ -268,7 +268,7 @@ ___
 
 **Returns:** *boolean*
 
-Defined in: [src/types.ts:68](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L68)
+Defined in: [src/types.ts:69](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L69)
 
 ___
 
@@ -278,7 +278,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputShardFunction
 
-Defined in: node_modules/dbcp/dist/index.d.ts:39
+Defined in: node_modules/dbcp/dist/index.d.ts:38
 
 ___
 
@@ -288,7 +288,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputShardIndex
 
-Defined in: node_modules/dbcp/dist/index.d.ts:40
+Defined in: node_modules/dbcp/dist/index.d.ts:39
 
 ___
 
@@ -298,7 +298,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputShards
 
-Defined in: node_modules/dbcp/dist/index.d.ts:41
+Defined in: node_modules/dbcp/dist/index.d.ts:40
 
 ___
 
@@ -308,7 +308,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputStream
 
-Defined in: node_modules/dbcp/dist/index.d.ts:42
+Defined in: node_modules/dbcp/dist/index.d.ts:41
 
 ___
 
@@ -318,7 +318,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputTable
 
-Defined in: node_modules/dbcp/dist/index.d.ts:43
+Defined in: node_modules/dbcp/dist/index.d.ts:42
 
 ___
 
@@ -328,7 +328,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputType
 
-Defined in: node_modules/dbcp/dist/index.d.ts:44
+Defined in: node_modules/dbcp/dist/index.d.ts:43
 
 ___
 
@@ -338,7 +338,7 @@ ___
 
 Inherited from: DatabaseCopyInput.inputUser
 
-Defined in: node_modules/dbcp/dist/index.d.ts:46
+Defined in: node_modules/dbcp/dist/index.d.ts:45
 
 ___
 
@@ -346,7 +346,7 @@ ___
 
 • `Optional` **jobid**: *string*
 
-Defined in: [src/types.ts:66](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L66)
+Defined in: [src/types.ts:67](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L67)
 
 ___
 
@@ -354,7 +354,7 @@ ___
 
 • `Optional` **localDirectory**: *string*
 
-Defined in: [src/types.ts:70](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L70)
+Defined in: [src/types.ts:71](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L71)
 
 ___
 
@@ -362,7 +362,7 @@ ___
 
 • `Optional` **logger**: Logger
 
-Defined in: [src/types.ts:71](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L71)
+Defined in: [src/types.ts:72](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L72)
 
 ___
 
@@ -370,7 +370,7 @@ ___
 
 • `Optional` **mapperClass**: [*MapperClass*](../modules/types.md#mapperclass)<Key, Value\>
 
-Defined in: [src/types.ts:72](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L72)
+Defined in: [src/types.ts:73](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L73)
 
 ___
 
@@ -378,7 +378,7 @@ ___
 
 • `Optional` **mapperImplementation**: [*MapperImplementation*](../enums/types.mapperimplementation.md)
 
-Defined in: [src/types.ts:73](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L73)
+Defined in: [src/types.ts:74](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L74)
 
 ___
 
@@ -388,7 +388,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputConnection
 
-Defined in: node_modules/dbcp/dist/index.d.ts:49
+Defined in: node_modules/dbcp/dist/index.d.ts:48
 
 ___
 
@@ -398,7 +398,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputElasticSearch
 
-Defined in: node_modules/dbcp/dist/index.d.ts:50
+Defined in: node_modules/dbcp/dist/index.d.ts:49
 
 ___
 
@@ -408,17 +408,17 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputFile
 
-Defined in: node_modules/dbcp/dist/index.d.ts:52
+Defined in: node_modules/dbcp/dist/index.d.ts:51
 
 ___
 
 ### outputFormat
 
-• `Optional` **outputFormat**: DatabaseCopyFormat
+• `Optional` **outputFormat**: DatabaseCopyFormat \| DatabaseCopyTransformFactory
 
 Inherited from: DatabaseCopyOutput.outputFormat
 
-Defined in: node_modules/dbcp/dist/index.d.ts:51
+Defined in: node_modules/dbcp/dist/index.d.ts:50
 
 ___
 
@@ -428,7 +428,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputHost
 
-Defined in: node_modules/dbcp/dist/index.d.ts:53
+Defined in: node_modules/dbcp/dist/index.d.ts:52
 
 ___
 
@@ -438,7 +438,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputKnex
 
-Defined in: node_modules/dbcp/dist/index.d.ts:54
+Defined in: node_modules/dbcp/dist/index.d.ts:53
 
 ___
 
@@ -448,7 +448,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputLeveldb
 
-Defined in: node_modules/dbcp/dist/index.d.ts:55
+Defined in: node_modules/dbcp/dist/index.d.ts:54
 
 ___
 
@@ -458,7 +458,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputMongodb
 
-Defined in: node_modules/dbcp/dist/index.d.ts:56
+Defined in: node_modules/dbcp/dist/index.d.ts:55
 
 ___
 
@@ -468,7 +468,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputName
 
-Defined in: node_modules/dbcp/dist/index.d.ts:57
+Defined in: node_modules/dbcp/dist/index.d.ts:56
 
 ___
 
@@ -478,7 +478,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputPassword
 
-Defined in: node_modules/dbcp/dist/index.d.ts:58
+Defined in: node_modules/dbcp/dist/index.d.ts:57
 
 ___
 
@@ -486,7 +486,7 @@ ___
 
 • **outputPath**: *string*
 
-Defined in: [src/types.ts:74](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L74)
+Defined in: [src/types.ts:75](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L75)
 
 ___
 
@@ -496,7 +496,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputPort
 
-Defined in: node_modules/dbcp/dist/index.d.ts:64
+Defined in: node_modules/dbcp/dist/index.d.ts:63
 
 ___
 
@@ -516,17 +516,17 @@ ___
 
 **Returns:** *boolean*
 
-Defined in: [src/types.ts:75](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L75)
+Defined in: [src/types.ts:76](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L76)
 
 ___
 
 ### outputShardFunction
 
-• `Optional` **outputShardFunction**: DatabaseCopyShardFunction
+• `Optional` **outputShardFunction**: DatabaseCopyShardFunction \| DatabaseCopyShardFunctionOverride
 
 Inherited from: DatabaseCopyOutput.outputShardFunction
 
-Defined in: node_modules/dbcp/dist/index.d.ts:59
+Defined in: node_modules/dbcp/dist/index.d.ts:58
 
 ___
 
@@ -536,7 +536,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputShards
 
-Defined in: node_modules/dbcp/dist/index.d.ts:60
+Defined in: node_modules/dbcp/dist/index.d.ts:59
 
 ___
 
@@ -546,7 +546,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputStream
 
-Defined in: node_modules/dbcp/dist/index.d.ts:61
+Defined in: node_modules/dbcp/dist/index.d.ts:60
 
 ___
 
@@ -556,7 +556,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputTable
 
-Defined in: node_modules/dbcp/dist/index.d.ts:62
+Defined in: node_modules/dbcp/dist/index.d.ts:61
 
 ___
 
@@ -566,7 +566,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputType
 
-Defined in: node_modules/dbcp/dist/index.d.ts:63
+Defined in: node_modules/dbcp/dist/index.d.ts:62
 
 ___
 
@@ -576,7 +576,7 @@ ___
 
 Inherited from: DatabaseCopyOutput.outputUser
 
-Defined in: node_modules/dbcp/dist/index.d.ts:65
+Defined in: node_modules/dbcp/dist/index.d.ts:64
 
 ___
 
@@ -584,7 +584,7 @@ ___
 
 • `Optional` **reducerClass**: [*ReducerClass*](../modules/types.md#reducerclass)<Key, Value\>
 
-Defined in: [src/types.ts:76](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L76)
+Defined in: [src/types.ts:77](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L77)
 
 ___
 
@@ -592,7 +592,7 @@ ___
 
 • `Optional` **runMap**: *boolean*
 
-Defined in: [src/types.ts:77](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L77)
+Defined in: [src/types.ts:78](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L78)
 
 ___
 
@@ -600,7 +600,7 @@ ___
 
 • `Optional` **runReduce**: *boolean*
 
-Defined in: [src/types.ts:78](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L78)
+Defined in: [src/types.ts:79](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L79)
 
 ___
 
@@ -608,7 +608,7 @@ ___
 
 • `Optional` **shuffleDirectory**: *string*
 
-Defined in: [src/types.ts:79](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L79)
+Defined in: [src/types.ts:80](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L80)
 
 ___
 
@@ -616,7 +616,7 @@ ___
 
 • `Optional` **synchronizeMap**: *boolean*
 
-Defined in: [src/types.ts:80](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L80)
+Defined in: [src/types.ts:81](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L81)
 
 ___
 
@@ -624,7 +624,7 @@ ___
 
 • `Optional` **synchronizeReduce**: *boolean*
 
-Defined in: [src/types.ts:81](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L81)
+Defined in: [src/types.ts:82](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L82)
 
 ___
 
@@ -632,7 +632,7 @@ ___
 
 • `Optional` **unpatchMap**: *boolean*
 
-Defined in: [src/types.ts:82](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L82)
+Defined in: [src/types.ts:83](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L83)
 
 ___
 
@@ -640,4 +640,4 @@ ___
 
 • `Optional` **unpatchReduce**: *boolean*
 
-Defined in: [src/types.ts:83](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L83)
+Defined in: [src/types.ts:84](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L84)

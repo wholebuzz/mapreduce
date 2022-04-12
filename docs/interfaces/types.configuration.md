@@ -27,7 +27,7 @@
 
 • `Optional` **inputKeyProperty**: *string*
 
-Defined in: [src/types.ts:15](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L15)
+Defined in: [src/types.ts:16](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L16)
 
 ___
 
@@ -35,7 +35,7 @@ ___
 
 • `Optional` **inputValueProperty**: *string*
 
-Defined in: [src/types.ts:16](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L16)
+Defined in: [src/types.ts:17](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L17)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 • `Optional` **keyProperty**: *string*
 
-Defined in: [src/types.ts:17](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L17)
+Defined in: [src/types.ts:18](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L18)
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 • `Optional` **name**: *string*
 
-Defined in: [src/types.ts:13](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L13)
+Defined in: [src/types.ts:14](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L14)
 
 ___
 
@@ -59,7 +59,7 @@ ___
 
 • `Optional` **user**: *string*
 
-Defined in: [src/types.ts:14](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L14)
+Defined in: [src/types.ts:15](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L15)
 
 ___
 
@@ -67,4 +67,4 @@ ___
 
 • `Optional` **valueProperty**: *string*
 
-Defined in: [src/types.ts:18](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L18)
+Defined in: [src/types.ts:19](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L19)

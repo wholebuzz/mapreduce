@@ -38,7 +38,7 @@
 | `Key` |
 | `Value` |
 
-Defined in: [src/types.ts:9](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L9)
+Defined in: [src/types.ts:10](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L10)
 
 ___
 
@@ -53,4 +53,4 @@ ___
 | `Key` |
 | `Value` |
 
-Defined in: [src/types.ts:10](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L10)
+Defined in: [src/types.ts:11](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L11)

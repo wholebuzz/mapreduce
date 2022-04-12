@@ -52,7 +52,7 @@
 
 Inherited from: [Base](types.base.md).[cleanup](types.base.md#cleanup)
 
-Defined in: [src/types.ts:24](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L24)
+Defined in: [src/types.ts:25](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L25)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 Inherited from: [Base](types.base.md).[configure](types.base.md#configure)
 
-Defined in: [src/types.ts:22](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L22)
+Defined in: [src/types.ts:23](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L23)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 **Returns:** *void* \| *Promise*<void\>
 
-Defined in: [src/types.ts:48](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L48)
+Defined in: [src/types.ts:49](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L49)
 
 ___
 
@@ -118,4 +118,4 @@ ___
 
 Inherited from: [Base](types.base.md).[setup](types.base.md#setup)
 
-Defined in: [src/types.ts:23](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L23)
+Defined in: [src/types.ts:24](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L24)
