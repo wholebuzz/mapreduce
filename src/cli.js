@@ -273,7 +273,7 @@ async function main() {
         if (!options.inputPaths) { throw new Error('No inputPaths') }
         if (!options.outputPath) { throw new Error('No outputPath') }
         try {
-          await mapReduce(await prepareRuntime(fileSystem, logger, options))
+          await mapReduce(await prepareRuntime(fileSystem, logger, { ...options, configuration }))
           returnValue = { inputPaths: args.inputPaths, outputPath: args.outputPath }
         } catch (err) {
           logger.info(err.message)
