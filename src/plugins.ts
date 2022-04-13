@@ -1,7 +1,9 @@
 import { FileSystem } from '@wholebuzz/fs/lib/fs'
+import { readJSON } from '@wholebuzz/fs/lib/json'
 import { readableToString } from '@wholebuzz/fs/lib/stream'
 import parseKeyValue from 'parse-key-value-pair'
 import { parse as pathParse } from 'path'
+import yargs from 'yargs'
 
 export const requireFromString = require('require-from-string')
 
@@ -51,7 +53,9 @@ export function loadPlugin<X>(
 ) {
   for (const key of Object.keys(plugin)) {
     const factory: any = plugin[key]
-    out[key === 'default' ? pathParse(url).name : key] = factory
+    if (typeof factory === 'function') {
+      out[key === 'default' ? pathParse(url).name : key] = factory
+    }
   }
   return out
 }
@@ -78,6 +82,42 @@ export function parseConfiguration(input?: string | string[]) {
     }
   }
   return ret
+}
+
+export async function applyJobConfigToYargs(fileSystem: FileSystem, args: Record<string, any>) {
+  args = deduplicateYargs(args)
+  const jobConfig = args.jobConfig
+    ? JSON.parse(args.jobConfig)
+    : args.jobConfigFile
+    ? await readJSON(fileSystem, args.jobConfigFile)
+    : undefined
+  const options = (yargs as any).getOptions()
+  for (const [key, value] of Object.entries(jobConfig || {})) {
+    if (args[key] && isProcessArgument(key)) continue
+    const valueType = Array.isArray(value) ? 'array' : typeof value
+    if (options.key[key] && !options[valueType]?.includes(key)) {
+      throw new Error(`jobConfig ${key} type mismatches ${valueType}`)
+    }
+    args[key] = value
+  }
+  return args
+}
+
+export function deduplicateYargs(args: Record<string, any>) {
+  const dedupArgs: Record<string, any> = {}
+  const options = (yargs as any).getOptions()
+  const aliasSet = new Set()
+  for (const aliases of Object.values(options.alias ?? {})) {
+    if (Array.isArray(aliases)) for (const alias of aliases) aliasSet.add(alias)
+  }
+  for (const [key, value] of Object.entries(args)) {
+    if (options.key[key] && !aliasSet.has(key)) dedupArgs[key] = value
+  }
+  return dedupArgs
+}
+
+function isProcessArgument(option: string) {
+  return process.argv.indexOf(`-${option}`) >= 0 || process.argv.indexOf(`--${option}`) >= 0
 }
 
 export function getSubPropertyWithPath(x: Record<string, any>, path?: string) {

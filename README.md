@@ -47,7 +47,7 @@ may be preferred.
 ### Sort (and shard) the [supplied test data](https://github.com/wholebuzz/mapreduce/tree/main/test) by `guid`
 
 ```console
-$ yarn start \
+$ yarn mapreduce \
   --map IdentityMapper \
   --reduce IdentityReducer \
   --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
@@ -59,7 +59,7 @@ $ yarn start \
 ### Re-sort (and shard) the output of the previous command by `id`
 
 ```console
-$ yarn start \
+$ yarn mapreduce \
   --map IdentityMapper \
   --reduce IdentityReducer \
   --inputPaths ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
@@ -82,8 +82,8 @@ $ diff ./test-id-sorted-0003-of-0004.json.gz ./test/test-0003-of-0004.json.gz
 ### Sort the supplied test data by `guid` using three workers
 
 ```console
-$ export MY_JOB_ID=`yarn --silent start job --new | tail -1 | jq -r ".jobid"`
-$ for ((i = 0; i < 3; i++)); do yarn start \
+$ export MY_JOB_ID=`yarn --silent mapreduce job --new | tail -1 | jq -r ".jobid"`
+$ for ((i = 0; i < 3; i++)); do yarn mapreduce \
   --jobid $MY_JOB_ID \
   --map IdentityMapper \
   --reduce IdentityReducer \
@@ -95,10 +95,25 @@ $ for ((i = 0; i < 3; i++)); do yarn start \
   -D keyProperty=guid &; done
 ```
 
+### Sort the supplied test data by `guid` using three workers and job config
+
+```console
+$ export MY_JOB_CONFIG=`yarn --silent mapreduce job --new \
+  --map IdentityMapper \
+  --reduce IdentityReducer \
+  --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
+  --outputPath ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
+  --outputShards 8 \
+  --numWorkers 3 \
+  -D keyProperty=guid \
+  | tail -1`
+$ for ((i = 0; i < 3; i++)); do yarn mapreduce --jobConfig "$MY_JOB_CONFIG" --workerIndex $i &; done
+```
+
 ### Sort the supplied test data by `guid` using three containerized workers
 
 ```console
-$ export MY_JOB_ID=`yarn --silent start job --new | tail -1 | jq -r ".jobid"`
+$ export MY_JOB_ID=`yarn --silent mapreduce job --new | tail -1 | jq -r ".jobid"`
 $ for ((i = 0; i < 3; i++)); do docker run -d -e "RUN_ARGS= \
   --jobid $MY_JOB_ID \
   --map IdentityMapper \

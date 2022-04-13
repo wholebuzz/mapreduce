@@ -1,9 +1,8 @@
-import { DirectoryEntry } from '@wholebuzz/fs/lib/fs'
+import { DirectoryEntry, FileSystem } from '@wholebuzz/fs/lib/fs'
 import { writeJSON } from '@wholebuzz/fs/lib/json'
-import { handleAsyncFunctionCallback, streamFilter } from '@wholebuzz/fs/lib/stream'
+import { streamFilter } from '@wholebuzz/fs/lib/stream'
 import {
   isShardedFilename,
-  Logger,
   readShardFilenames,
   shardedFilename,
   waitForCompleteShardedInput,
@@ -11,38 +10,28 @@ import {
 import { assignDatabaseCopyOutputProperties, DatabaseCopyOptions, dbcp } from 'dbcp'
 import { DatabaseCopyShardFunction, inputIsSqlDatabase } from 'dbcp/dist/format'
 import { updateObjectProperties } from 'dbcp/dist/util'
-import { Transform } from 'stream'
 import { pumpReadable } from 'tree-stream'
 import { runMapPhaseWithLevelDb } from './leveldb'
+import { factoryConstruct, getObjectClassName } from './plugins'
 import {
-  factoryConstruct,
-  getObjectClassName,
-  getSubPropertyAccessor,
-  getSubPropertySetter,
-} from './plugins'
-import {
-  Configuration,
-  Item,
-  MapContext,
-  Mapper,
-  MapperImplementation,
-  MapReduceJobConfig,
-  ReduceContext,
-  Reducer,
-} from './types'
+  defaultDiretory,
+  defaultKeyProperty,
+  defaultShuffleFormat,
+  getUser,
+  getWorkDirectory,
+  immutableContext,
+  inputshardFilenameFormat,
+  localTempDirectoryPrefix,
+  mapTransform,
+  newJobId,
+  reduceTransform,
+  shuffleFilenameFormat,
+  synchronizeMapFilenameFormat,
+  synchronizeReduceFilenameFormat,
+} from './runtime'
+import { InputSplit, Mapper, MapperImplementation, MapReduceRuntimeConfig, Reducer } from './types'
 
-export const defaultDiretory = './'
-export const defaultKeyProperty = 'key'
-export const defaultValueProperty = '' // Blank means the underlying object itself
-export const unknownWriteProperty = 'value'
-export const defaultShuffleFormat = 'jsonl.gz'
-export const shuffleFilenameFormat = 'shuffle-SSSS-of-NNNN'
-export const inputshardFilenameFormat = 'inputshard-SSSS-of-NNNN'
-export const synchronizeMapFilenameFormat = 'map-done-SSSS-of-NNNN.json'
-export const synchronizeReduceFilenameFormat = 'reduce-done-SSSS-of-NNNN.json'
-export const localTempDirectoryPrefix = 'maptmp'
-
-export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>) {
+export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Value>) {
   const keyProperty = args.configuration?.keyProperty || defaultKeyProperty
   const shuffleFormat = defaultShuffleFormat
   const user = getUser(args.configuration?.user)
@@ -71,34 +60,14 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
   }
 
   // Find input splits
-  const inputSplits: string[] = []
-  for (const path of args.inputPaths) {
-    if (isShardedFilename(path)) {
-      const numShards = (await readShardFilenames(args.fileSystem, path)).numShards
-      for (let i = 0; i < numShards; i++) {
-        inputSplits.push(shardedFilename(args.inputPaths[0], { index: i, modulus: numShards }))
-      }
-    } else if (path.endsWith('/')) {
-      const directoryStream = await args.fileSystem.readDirectoryStream(path, { recursive: true })
-      await pumpReadable(
-        directoryStream.pipe(
-          streamFilter((file: DirectoryEntry) => {
-            inputSplits.push(file.url)
-          })
-        ),
-        undefined
-      )
-    } else {
-      inputSplits.push(path)
-    }
-  }
+  if (!args.inputSplits) args.inputSplits = await getSplits(args.fileSystem, args.inputPaths)
   await args.fileSystem.ensureDirectory(shuffleDirectory)
 
   // map phase
   const runMap = args.runMap !== false && !args.unpatchMap
-  for (let inputSplit = 0; runMap && inputSplit < inputSplits.length; inputSplit++) {
+  for (let inputSplit = 0; runMap && inputSplit < args.inputSplits.length; inputSplit++) {
     if (args.inputShardFilter && !args.inputShardFilter(inputSplit)) continue
-    const shard = { index: inputSplit, modulus: inputSplits.length }
+    const shard = { index: inputSplit, modulus: args.inputSplits.length }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
     const localDirectories = new Array(outputShards)
       .fill(localDirectory)
@@ -110,7 +79,7 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
         ? undefined
         : [
             {
-              url: inputSplits[inputSplit],
+              url: args.inputSplits[inputSplit].url,
             },
           ],
       // dir/shuffle-SSSS-of-NNNN.inputshard-0000-of-0004.jsonl.gz
@@ -164,8 +133,8 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
       ...assignDatabaseCopyOutputProperties({}, args),
       orderBy: [keyProperty],
       inputFiles: args.unpatchMap
-        ? inputSplits.map((x) => ({
-            url: x,
+        ? args.inputSplits.map((x) => ({
+            url: x.url,
           }))
         : [
             {
@@ -173,7 +142,7 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
                 shuffleDirectory +
                 shardedFilename(shuffleFilenameFormat, shard) +
                 `.${inputshardFilenameFormat}.${shuffleFormat}`,
-              inputShards: inputSplits.length,
+              inputShards: args.inputSplits.length,
             },
           ],
       outputFile: shardedFilename(args.outputPath, shard),
@@ -182,9 +151,9 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
     const waitForUrl = args.synchronizeMap
       ? shuffleDirectory + synchronizeMapFilenameFormat
       : options.inputFiles[0].url
-    args.logger?.debug(`Wait for ${waitForUrl}@${inputSplits}`)
+    args.logger?.debug(`Wait for ${waitForUrl}@${args.inputSplits.map((x) => x.url)}`)
     await waitForCompleteShardedInput(args.fileSystem, waitForUrl, {
-      shards: inputSplits.length,
+      shards: args.inputSplits.length,
     })
     args.logger?.debug(`Found ${waitForUrl}`)
 
@@ -211,7 +180,7 @@ export async function mapReduce<Key, Value>(args: MapReduceJobConfig<Key, Value>
   if (args.cleanup !== false) {
     await runCleanupPhase(
       {
-        inputShards: inputSplits.length,
+        inputShards: args.inputSplits.length,
         outputShards,
         runMap,
         runReduce,
@@ -234,145 +203,9 @@ export function getMapperImplementation(type?: MapperImplementation, hasCombiner
   }
 }
 
-export const immutableContext = (configuration?: Configuration) => ({
-  configuration: configuration ?? {},
-  currentItem: {},
-  keyProperty: configuration?.keyProperty ?? defaultKeyProperty,
-  valueProperty: configuration?.valueProperty ?? defaultValueProperty,
-  write: () => {
-    throw new Error()
-  },
-})
-
-export function mappedObject<Key, _Value>(
-  key: Key,
-  value: any,
-  keySetter: ((output: Record<string, any>, value: any) => void) | undefined,
-  nonObjectValueSetter: (output: Record<string, any>, value: any) => void,
-  transform?: (value: Item) => Item
-): Item {
-  const output: Item = typeof value === 'object' ? { ...value } : nonObjectValueSetter({}, value)
-  if (keySetter) keySetter(output, key)
-  return transform ? transform(output) : output
-}
-
-export function mapTransform<Key, Value>(
-  mapper: Mapper<Key, Value>,
-  args?: {
-    configuration?: Configuration
-    logger?: Logger
-    transform?: (value: Item) => Item
-  }
-) {
-  let transform!: Transform
-  let warnedReadFalsyKey = false
-  let warnedReadFalsyValue = false
-  let warnedWroteFalsyKey = false
-  let warnedWroteFalsyValue = false
-  const configuration = args?.configuration ?? {}
-  const keyProperty = configuration?.keyProperty ?? defaultKeyProperty
-  const valueProperty = configuration?.valueProperty ?? defaultValueProperty
-  const setItemKey = keyProperty ? getSubPropertySetter(keyProperty) : undefined
-  const setItemValue = getSubPropertySetter(valueProperty || unknownWriteProperty)
-  const context: MapContext<Key, Value> = {
-    configuration,
-    currentItem: {},
-    currentValue: undefined!,
-    inputKeyProperty: configuration.inputKeyProperty ?? keyProperty,
-    inputValueProperty: configuration.inputValueProperty ?? valueProperty,
-    keyProperty,
-    valueProperty,
-    write: (key: Key, value: any) => {
-      if (!key && !warnedWroteFalsyKey) {
-        warnedWroteFalsyKey = true
-        if (args?.logger) args.logger.error('WARNING: Wrote falsy Mapper key')
-      }
-      if (!value && !warnedWroteFalsyValue) {
-        warnedWroteFalsyValue = true
-        if (args?.logger) args.logger.error('WARNING: Wrote falsy Mapper value')
-      }
-      transform.push(mappedObject(key, value, setItemKey, setItemValue, args?.transform))
-    },
-  }
-  const getItemKey = getItemKeyAccessor(context.inputKeyProperty)
-  const getItemValue = getItemValueAccessor(context.inputValueProperty)
-  transform = new Transform({
-    objectMode: true,
-    transform(data: Item, _, callback) {
-      context.currentItem = data
-      context.currentKey = getItemKey(context.currentItem)
-      context.currentValue = getItemValue(context.currentItem)
-      if (!context.currentKey && !warnedReadFalsyKey) {
-        warnedReadFalsyKey = true
-        if (args?.logger) args.logger.error('WARNING: Read falsy Mapper key')
-      }
-      if (!context.currentValue && !warnedReadFalsyValue) {
-        warnedReadFalsyValue = true
-        if (args?.logger) args.logger.error('WARNING: Read falsy Mapper value')
-      }
-      const running = mapper.map(context.currentKey!, context.currentValue, context)
-      handleAsyncFunctionCallback(running, callback)
-    },
-  })
-  return transform
-}
-
-export function reduceTransform<Key, Value>(
-  reducer: Reducer<Key, Value>,
-  args: { configuration?: Configuration; logger?: Logger; transform?: (value: Item) => Item }
-) {
-  let transform!: Transform
-  let warnedReadFalsyKey = false
-  let warnedReadFalsyValue = false
-  let warnedWroteFalsyValue = false
-  const configuration = args?.configuration ?? {}
-  const keyProperty = configuration.keyProperty ?? defaultKeyProperty
-  const valueProperty = configuration.valueProperty ?? defaultValueProperty
-  const setItemKey = keyProperty ? getSubPropertySetter(keyProperty) : undefined
-  const setItemValue = getSubPropertySetter(valueProperty || unknownWriteProperty)
-  const context: ReduceContext<Key, Value> = {
-    configuration,
-    currentItem: [],
-    currentValue: [],
-    keyProperty,
-    valueProperty,
-    write: (key: Key, value: any) => {
-      if (key !== context.currentKey) throw new Error(`Reducer can't change key`)
-      if (!value && !warnedWroteFalsyValue) {
-        warnedWroteFalsyValue = true
-        if (args?.logger) args.logger.error('WARNING: Wrote falsy Reducer value')
-      }
-      transform.push(mappedObject(key, value, setItemKey, setItemValue, args?.transform))
-    },
-  }
-  const getItemKey = getItemKeyAccessor(context.keyProperty)
-  const getItemValue = getItemValueAccessor(context.valueProperty)
-  transform = new Transform({
-    objectMode: true,
-    transform(data, _, callback) {
-      context.currentItem = Array.isArray(data)
-        ? data.map((x: { source: string; value: Record<string, any> }) => x.value)
-        : [data]
-      context.currentKey = getItemKey(context.currentItem[0])
-      context.currentValue = context.currentItem.map(getItemValue)
-      if (!context.currentKey && !warnedReadFalsyKey) {
-        warnedReadFalsyKey = true
-        if (args?.logger) args.logger.error('WARNING: Read falsy Reducer key')
-      }
-      if ((!context.currentValue.length || !context.currentValue[0]) && !warnedReadFalsyValue) {
-        warnedReadFalsyValue = true
-        if (args?.logger) args.logger.error('WARNING: Read falsy Reducer value')
-      }
-      const running = reducer.reduce(context.currentKey!, context.currentValue, context)
-      handleAsyncFunctionCallback(running, callback)
-    },
-  })
-  return transform
-}
-
 export async function runReducePhase<Key, Value>(
   reducer: Reducer<Key, Value>,
-  args: MapReduceJobConfig<Key, Value>,
+  args: MapReduceRuntimeConfig<Key, Value>,
   options: DatabaseCopyOptions
 ) {
   options = {
@@ -399,7 +232,7 @@ export async function runReducePhase<Key, Value>(
 export async function runMapPhaseWithExternalSorting<Key, Value>(
   mapper: Mapper<Key, Value>,
   combiner: Reducer<Key, Value> | undefined,
-  args: MapReduceJobConfig<Key, Value>,
+  args: MapReduceRuntimeConfig<Key, Value>,
   options: DatabaseCopyOptions
 ) {
   const keyProperty = options.shardBy!
@@ -445,7 +278,7 @@ export async function runCleanupPhase<Key, Value>(
     shuffleDirectory: string
     shuffleFormat: string
   },
-  options: MapReduceJobConfig<Key, Value>
+  options: MapReduceRuntimeConfig<Key, Value>
 ) {
   if (!options.unpatchMap && !options.unpatchReduce) {
     for (let outputShard = 0; outputShard < args.outputShards; outputShard++) {
@@ -504,24 +337,27 @@ export async function runCleanupPhase<Key, Value>(
   }
 }
 
-export function newJobId(name?: string) {
-  return (name || 'mr-job') + `-${new Date().getTime()}`
+export async function getSplits(fileSystem: FileSystem, inputPaths: string[]) {
+  const inputSplits: InputSplit[] = []
+  for (const path of inputPaths) {
+    if (isShardedFilename(path)) {
+      const numShards = (await readShardFilenames(fileSystem, path)).numShards
+      for (let i = 0; i < numShards; i++) {
+        inputSplits.push({ url: shardedFilename(inputPaths[0], { index: i, modulus: numShards }) })
+      }
+    } else if (path.endsWith('/')) {
+      const directoryStream = await fileSystem.readDirectoryStream(path, { recursive: true })
+      await pumpReadable(
+        directoryStream.pipe(
+          streamFilter((file: DirectoryEntry) => {
+            inputSplits.push({ url: file.url })
+          })
+        ),
+        undefined
+      )
+    } else {
+      inputSplits.push({ url: path })
+    }
+  }
+  return inputSplits
 }
-
-export function getUser(user?: string) {
-  return user || process.env.USER || 'mr-user'
-}
-
-export function getWorkDirectory(user: string, jobid: string) {
-  return `taskTracker/${user}/jobcache/${jobid}/work/`
-}
-
-export function getShardFilter(workerIndex: number, numWorkers: number) {
-  return numWorkers > 1 ? (index: number) => index % numWorkers === workerIndex : undefined
-}
-
-export const getItemKeyAccessor = (inputKeyProperty?: string) =>
-  inputKeyProperty ? getSubPropertyAccessor(inputKeyProperty) : () => undefined
-
-export const getItemValueAccessor = (inputValueProperty?: string) =>
-  inputValueProperty ? getSubPropertyAccessor(inputValueProperty) : (x: any) => x

@@ -1,7 +1,15 @@
 import type { FileSystem } from '@wholebuzz/fs/lib/fs'
 import type { Logger } from '@wholebuzz/fs/lib/util'
-import type { DatabaseCopyInput, DatabaseCopyOutput } from 'dbcp'
+import {
+  Configuration,
+  InputSplit,
+  MapperImplementation,
+  MapReduceBaseConfig,
+  MapReduceJobConfig,
+} from './config'
 import type { Factory } from './plugins'
+
+export { Configuration, InputSplit, MapperImplementation, MapReduceBaseConfig, MapReduceJobConfig }
 
 export interface Item {
   [key: string]: any
@@ -10,17 +18,8 @@ export interface Item {
 export type MapperClass<Key, Value> = Factory<Mapper<Key, Value>>
 export type ReducerClass<Key, Value> = Factory<Reducer<Key, Value>>
 
-export interface Configuration extends Record<string, any> {
-  name?: string
-  user?: string
-  inputKeyProperty?: string
-  inputValueProperty?: string
-  keyProperty?: string
-  valueProperty?: string
-}
-
 export interface Base<Key, Value> {
-  configure?: (config: MapReduceJobConfig<Key, Value>) => void
+  configure?: (config: MapReduceRuntimeConfig<Key, Value>) => void
   setup?: (context: Context<Key, Value>) => Promise<void>
   cleanup?: (context: Context<Key, Value>) => Promise<void>
 }
@@ -53,33 +52,15 @@ export interface Reducer<Key, Value> extends Base<Key, Value> {
   reduce: (key: Key, values: Value[], context: ReduceContext<Key, Value>) => void | Promise<void>
 }
 
-export enum MapperImplementation {
-  externalSorting = 'externalSorting',
-  leveldb = 'leveldb',
-  // memory = 'memory',
-}
+export type Plugin<Key, Value> = Mapper<Key, Value> | Reducer<Key, Value>
 
-export interface MapReduceJobConfig<Key, Value> extends DatabaseCopyInput, DatabaseCopyOutput {
-  cleanup?: boolean
+export interface MapReduceRuntimeConfig<Key, Value> extends MapReduceBaseConfig {
   combinerClass?: ReducerClass<Key, Value>
-  configuration?: Configuration
   fileSystem: FileSystem
-  jobid?: string
-  inputPaths: string[]
   inputShardFilter?: (index: number) => boolean
-  inputOptions?: DatabaseCopyInput
-  localDirectory?: string
   logger?: Logger
   mapperClass?: MapperClass<Key, Value>
   mapperImplementation?: MapperImplementation
-  outputPath: string
   outputShardFilter?: (index: number) => boolean
   reducerClass?: ReducerClass<Key, Value>
-  runMap?: boolean
-  runReduce?: boolean
-  shuffleDirectory?: string
-  synchronizeMap?: boolean
-  synchronizeReduce?: boolean
-  unpatchMap?: boolean
-  unpatchReduce?: boolean
 }

@@ -12,4 +12,4 @@ WORKDIR /wholebuzz/mapreduce/
 COPY package.json tsconfig.json ./
 COPY --from=build /build/dist ./dist/
 RUN yarn install --production=true
-CMD yarn --silent start $RUN_ARGS
+ENTRYPOINT yarn --silent start $RUN_ARGS

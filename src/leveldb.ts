@@ -9,6 +9,7 @@ import { LevelUp } from 'levelup'
 import pSettle from 'p-settle'
 import { Transform } from 'stream'
 import StreamTree from 'tree-stream'
+import { formatNumberForUtf8Sort, getObjectClassName, getSubPropertySetter } from './plugins'
 import {
   defaultKeyProperty,
   defaultValueProperty,
@@ -16,14 +17,20 @@ import {
   mappedObject,
   mapTransform,
   unknownWriteProperty,
-} from './mapreduce'
-import { formatNumberForUtf8Sort, getObjectClassName, getSubPropertySetter } from './plugins'
-import { Configuration, Item, Mapper, MapReduceJobConfig, ReduceContext, Reducer } from './types'
+} from './runtime'
+import {
+  Configuration,
+  Item,
+  Mapper,
+  MapReduceRuntimeConfig,
+  ReduceContext,
+  Reducer,
+} from './types'
 
 export async function runMapPhaseWithLevelDb<Key, Value>(
   mapper: Mapper<Key, Value>,
   combiner: Reducer<Key, Value> | undefined,
-  args: MapReduceJobConfig<Key, Value>,
+  args: MapReduceRuntimeConfig<Key, Value>,
   options: DatabaseCopyOptions
 ) {
   const outputFile = options.outputFile!

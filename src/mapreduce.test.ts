@@ -14,9 +14,10 @@ import {
   expectCreateFileWithHash,
 } from 'dbcp/dist/test.fixture'
 import { IdentityMapper } from './mappers'
-import { getShardFilter, mapReduce, newJobId } from './mapreduce'
+import { mapReduce } from './mapreduce'
 import { IdentityReducer } from './reducers'
-import { MapperImplementation, MapReduceJobConfig } from './types'
+import { getShardFilter, newJobId } from './runtime'
+import { MapperImplementation, MapReduceRuntimeConfig } from './types'
 
 const fileSystem = new AnyFileSystem([
   { urlPrefix: 'gs://', fs: new GoogleCloudFileSystem() },
@@ -65,7 +66,7 @@ describe('With MapperImplementation.leveldb', () => {
 })
 
 async function testMapReduceSortByGuid<Key, Value>(
-  options: Partial<MapReduceJobConfig<Key, Value>>
+  options: Partial<MapReduceRuntimeConfig<Key, Value>>
 ) {
   const keyProperty = 'guid'
   await expectCreateFilesWithHashes(
@@ -88,7 +89,9 @@ async function testMapReduceSortByGuid<Key, Value>(
   await verifyShardedOutput(targetShardedNDJsonUrl, targetShardedNumShards, keyProperty)
 }
 
-async function testMapReduceSortById<Key, Value>(options: Partial<MapReduceJobConfig<Key, Value>>) {
+async function testMapReduceSortById<Key, Value>(
+  options: Partial<MapReduceRuntimeConfig<Key, Value>>
+) {
   await expectCreateFileWithHash(fileSystem, targetNDJsonUrl, targetNDJsonHash, () =>
     mapReduce({
       configuration: { keyProperty: 'id' },
@@ -105,7 +108,7 @@ async function testMapReduceSortById<Key, Value>(options: Partial<MapReduceJobCo
 }
 
 async function testExecMapReduceSortByGuid<Key, Value>(
-  options: Partial<MapReduceJobConfig<Key, Value>>
+  options: Partial<MapReduceRuntimeConfig<Key, Value>>
 ) {
   const keyProperty = 'guid'
   await testExecMapReduce({
@@ -122,7 +125,7 @@ async function testExecMapReduceSortByGuid<Key, Value>(
 }
 
 async function testExecMapReduceSortById<Key, Value>(
-  options: Partial<MapReduceJobConfig<Key, Value>>
+  options: Partial<MapReduceRuntimeConfig<Key, Value>>
 ) {
   const keyProperty = 'id'
   await testExecMapReduce({
