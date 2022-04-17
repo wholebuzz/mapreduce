@@ -9,7 +9,7 @@ RUN yarn && yarn build
 
 FROM base
 WORKDIR /wholebuzz/mapreduce/
-COPY package.json tsconfig.json ./
+COPY package.json tsconfig.json scripts/entrypoint.sh ./
 COPY --from=build /build/dist ./dist/
 RUN yarn install --production=true
-ENTRYPOINT yarn --silent start $RUN_ARGS
+ENTRYPOINT ["/wholebuzz/mapreduce/entrypoint.sh"]

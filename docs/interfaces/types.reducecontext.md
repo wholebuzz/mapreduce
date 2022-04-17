@@ -33,11 +33,11 @@
 
 ### configuration
 
-• **configuration**: [*Configuration*](types.configuration.md)
+• **configuration**: [*Configuration*](config.configuration.md)
 
 Inherited from: [Context](types.context.md).[configuration](types.context.md#configuration)
 
-Defined in: [src/types.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L29)
+Defined in: [src/types.ts:28](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L28)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 • **currentItem**: [*Item*](types.item.md)[]
 
-Defined in: [src/types.ts:44](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L44)
+Defined in: [src/types.ts:43](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L43)
 
 ___
 
@@ -55,7 +55,7 @@ ___
 
 Inherited from: [Context](types.context.md).[currentKey](types.context.md#currentkey)
 
-Defined in: [src/types.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L30)
+Defined in: [src/types.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L29)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 • **currentValue**: Value[]
 
-Defined in: [src/types.ts:45](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L45)
+Defined in: [src/types.ts:44](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L44)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 Inherited from: [Context](types.context.md).[keyProperty](types.context.md#keyproperty)
 
-Defined in: [src/types.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L31)
+Defined in: [src/types.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L30)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 Inherited from: [Context](types.context.md).[valueProperty](types.context.md#valueproperty)
 
-Defined in: [src/types.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L32)
+Defined in: [src/types.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L31)
 
 ___
 
@@ -106,4 +106,4 @@ ___
 
 Inherited from: [Context](types.context.md).[write](types.context.md#write)
 
-Defined in: [src/types.ts:33](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L33)
+Defined in: [src/types.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L32)

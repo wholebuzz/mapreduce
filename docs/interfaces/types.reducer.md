@@ -50,29 +50,29 @@
 
 Inherited from: [Base](types.base.md).[cleanup](types.base.md#cleanup)
 
-Defined in: [src/types.ts:25](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L25)
+Defined in: [src/types.ts:24](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L24)
 
 ___
 
 ### configure
 
-• `Optional` **configure**: (`config`: [*MapReduceJobConfig*](types.mapreducejobconfig.md)<Key, Value\>) => *void*
+• `Optional` **configure**: (`config`: [*MapReduceRuntimeConfig*](types.mapreduceruntimeconfig.md)<Key, Value\>) => *void*
 
 #### Type declaration
 
-▸ (`config`: [*MapReduceJobConfig*](types.mapreducejobconfig.md)<Key, Value\>): *void*
+▸ (`config`: [*MapReduceRuntimeConfig*](types.mapreduceruntimeconfig.md)<Key, Value\>): *void*
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `config` | [*MapReduceJobConfig*](types.mapreducejobconfig.md)<Key, Value\> |
+| `config` | [*MapReduceRuntimeConfig*](types.mapreduceruntimeconfig.md)<Key, Value\> |
 
 **Returns:** *void*
 
 Inherited from: [Base](types.base.md).[configure](types.base.md#configure)
 
-Defined in: [src/types.ts:23](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L23)
+Defined in: [src/types.ts:22](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L22)
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 **Returns:** *void* \| *Promise*<void\>
 
-Defined in: [src/types.ts:53](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L53)
+Defined in: [src/types.ts:52](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L52)
 
 ___
 
@@ -116,4 +116,4 @@ ___
 
 Inherited from: [Base](types.base.md).[setup](types.base.md#setup)
 
-Defined in: [src/types.ts:24](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L24)
+Defined in: [src/types.ts:23](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L23)

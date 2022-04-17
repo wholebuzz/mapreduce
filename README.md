@@ -126,13 +126,31 @@ $ for ((i = 0; i < 3; i++)); do docker run -d -e "RUN_ARGS= \
   --workerIndex $i \
   -D keyProperty=guid" \
   -v $PWD:/mnt-cwd \
-  -it wholebuzz/mapreduce; done
+  --rm -it wholebuzz/mapreduce; done
 ```
 
 ## Same example running in the cloud
 
 - Supply `s3://` or `gs://` URLs for `--inputPaths`, `--outputPath`, and `--shuffleDirectory`.
 - Use your preferred scheduler to start the workers (e.g. Airflow, Hadoop, Kubeflow, Kubernetes, EC2, or GCE). See [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
+
+## Database input
+
+```console
+$ yarn mapreduce \
+  --inputType postgresql \
+  --inputName postgres \
+  --inputHost localhost \
+  --inputPort 5433 \
+  --inputUser postgres \
+  --inputPassword postgres \
+  --inputTable dbcptest \
+  --inputShards 4 \
+  --inputShardBy guid \
+  --outputPath ./dbcptest-SSSS-of-NNNN.jsonl.gz \
+  --outputShards 4 \
+  -D keyProperty=guid
+```
 
 ## Technical overview
 
@@ -217,9 +235,11 @@ of the stages of Shuffle and Reduce.
 ### Modules
 
 - [cli](docs/modules/cli.md)
+- [config](docs/modules/config.md)
 - [leveldb](docs/modules/leveldb.md)
 - [mappers](docs/modules/mappers.md)
 - [mapreduce](docs/modules/mapreduce.md)
 - [plugins](docs/modules/plugins.md)
 - [reducers](docs/modules/reducers.md)
+- [runtime](docs/modules/runtime.md)
 - [types](docs/modules/types.md)

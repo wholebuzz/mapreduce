@@ -1,6 +1,6 @@
 {
   "name": "@wholebuzz/mapreduce",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Communication-free MapReduce for the 99%",
   "keywords": [
     "mapreduce"

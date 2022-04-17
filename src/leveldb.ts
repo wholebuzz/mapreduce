@@ -9,10 +9,11 @@ import { LevelUp } from 'levelup'
 import pSettle from 'p-settle'
 import { Transform } from 'stream'
 import StreamTree from 'tree-stream'
-import { formatNumberForUtf8Sort, getObjectClassName, getSubPropertySetter } from './plugins'
+import { getObjectClassName, getSubPropertySetter } from './plugins'
 import {
   defaultKeyProperty,
   defaultValueProperty,
+  formatNumberForUtf8Sort,
   getItemValueAccessor,
   mappedObject,
   mapTransform,

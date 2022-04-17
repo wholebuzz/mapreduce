@@ -33,9 +33,9 @@
 
 ### configuration
 
-• **configuration**: [*Configuration*](types.configuration.md)
+• **configuration**: [*Configuration*](config.configuration.md)
 
-Defined in: [src/types.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L29)
+Defined in: [src/types.ts:28](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L28)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 • `Optional` **currentKey**: Key
 
-Defined in: [src/types.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L30)
+Defined in: [src/types.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L29)
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 • **keyProperty**: *string*
 
-Defined in: [src/types.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L31)
+Defined in: [src/types.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L30)
 
 ___
 
@@ -59,7 +59,7 @@ ___
 
 • **valueProperty**: *string*
 
-Defined in: [src/types.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L32)
+Defined in: [src/types.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L31)
 
 ___
 
@@ -80,4 +80,4 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/types.ts:33](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L33)
+Defined in: [src/types.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L32)

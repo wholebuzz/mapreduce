@@ -15,6 +15,7 @@ const {
   DatabaseCopyOutputType,
   DatabaseCopySchema,
   DatabaseCopyShardFunction,
+  inputIsSqlDatabase,
 } = require('dbcp/dist/format')
 const dotenv = require('dotenv')
 const yargs = require('yargs')
@@ -43,6 +44,10 @@ async function main() {
   const mainArgs = await yargs
     .strict()
     .options({
+      cleanup: {
+        description: 'Clean up',
+        type: 'boolean',
+      },
       combine: {
         description: 'Combiner name',
         type: 'string',
@@ -270,8 +275,12 @@ async function main() {
         }),
       async (args) => {
         const options = await applyJobConfigToYargs(fileSystem, args)
-        if (!options.inputPaths) { throw new Error('No inputPaths') }
-        if (!options.outputPath) { throw new Error('No outputPath') }
+        if (!options.inputPaths && !inputIsSqlDatabase(args.inputType)) {
+          throw new Error('No inputPaths')
+        }
+        if (!options.outputPath) {
+          throw new Error('No outputPath')
+        }
         try {
           await mapReduce(await prepareRuntime(fileSystem, logger, { ...options, configuration }))
           returnValue = { inputPaths: args.inputPaths, outputPath: args.outputPath }

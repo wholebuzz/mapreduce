@@ -34,7 +34,7 @@ export const synchronizeReduceFilenameFormat = 'reduce-done-SSSS-of-NNNN.json'
 export const localTempDirectoryPrefix = 'maptmp'
 
 export function newJobId(name?: string) {
-  return getName(name) + `-${new Date().getTime()}`
+  return getName(name) + `-${formatNumberForUtf8Sort(new Date().getTime(), true)}`
 }
 
 export function getName(name?: string) {
@@ -58,6 +58,12 @@ export const getItemKeyAccessor = (inputKeyProperty?: string) =>
 
 export const getItemValueAccessor = (inputValueProperty?: string) =>
   inputValueProperty ? getSubPropertyAccessor(inputValueProperty) : (x: any) => x
+
+// maxIntegerDigits == '9007199254740991'.length == 16
+export const maxIntegerDigits = Number.MAX_SAFE_INTEGER.toString().length
+
+export const formatNumberForUtf8Sort = (value: number, reverse?: boolean) =>
+  (reverse ? Number.MAX_SAFE_INTEGER - value : value).toString().padStart(maxIntegerDigits, '0')
 
 export async function prepareRuntime<Key, Value>(
   fileSystem: FileSystem,

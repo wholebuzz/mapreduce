@@ -12,13 +12,13 @@
 
 ### Variables
 
-- [maxIntegerDigits](plugins.md#maxintegerdigits)
 - [requireFromString](plugins.md#requirefromstring)
 
 ### Functions
 
+- [applyJobConfigToYargs](plugins.md#applyjobconfigtoyargs)
+- [deduplicateYargs](plugins.md#deduplicateyargs)
 - [factoryConstruct](plugins.md#factoryconstruct)
-- [formatNumberForUtf8Sort](plugins.md#formatnumberforutf8sort)
 - [getObjectClassName](plugins.md#getobjectclassname)
 - [getSubProperty](plugins.md#getsubproperty)
 - [getSubPropertyAccessor](plugins.md#getsubpropertyaccessor)
@@ -48,7 +48,7 @@
 
 **Returns:** X
 
-Defined in: [src/plugins.ts:8](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L8)
+Defined in: [src/plugins.ts:10](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L10)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 | :------ |
 | `X` |
 
-Defined in: [src/plugins.ts:10](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L10)
+Defined in: [src/plugins.ts:12](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L12)
 
 ___
 
@@ -82,25 +82,50 @@ ___
 
 **Returns:** X
 
-Defined in: [src/plugins.ts:9](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L9)
+Defined in: [src/plugins.ts:11](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L11)
 
 ## Variables
-
-### maxIntegerDigits
-
-• `Const` **maxIntegerDigits**: *number*
-
-Defined in: [src/plugins.ts:133](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L133)
-
-___
 
 ### requireFromString
 
 • `Const` **requireFromString**: *any*
 
-Defined in: [src/plugins.ts:6](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L6)
+Defined in: [src/plugins.ts:8](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L8)
 
 ## Functions
+
+### applyJobConfigToYargs
+
+▸ **applyJobConfigToYargs**(`fileSystem`: FileSystem, `args`: *Record*<string, any\>): *Promise*<Record<string, any\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `fileSystem` | FileSystem |
+| `args` | *Record*<string, any\> |
+
+**Returns:** *Promise*<Record<string, any\>\>
+
+Defined in: [src/plugins.ts:87](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L87)
+
+___
+
+### deduplicateYargs
+
+▸ **deduplicateYargs**(`args`: *Record*<string, any\>): *Record*<string, any\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `args` | *Record*<string, any\> |
+
+**Returns:** *Record*<string, any\>
+
+Defined in: [src/plugins.ts:106](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L106)
+
+___
 
 ### factoryConstruct
 
@@ -120,24 +145,7 @@ Defined in: [src/plugins.ts:6](https://github.com/wholebuzz/mapreduce/blob/maste
 
 **Returns:** X
 
-Defined in: [src/plugins.ts:14](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L14)
-
-___
-
-### formatNumberForUtf8Sort
-
-▸ `Const` **formatNumberForUtf8Sort**(`value`: *number*, `reverse?`: *boolean*): *string*
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `value` | *number* |
-| `reverse?` | *boolean* |
-
-**Returns:** *string*
-
-Defined in: [src/plugins.ts:135](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L135)
+Defined in: [src/plugins.ts:16](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L16)
 
 ___
 
@@ -153,7 +161,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/plugins.ts:12](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L12)
+Defined in: [src/plugins.ts:14](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L14)
 
 ___
 
@@ -170,7 +178,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/plugins.ts:87](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L87)
+Defined in: [src/plugins.ts:127](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L127)
 
 ___
 
@@ -186,7 +194,7 @@ ___
 
 **Returns:** (`_`: *Record*<string, any\>) => *any*
 
-Defined in: [src/plugins.ts:106](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L106)
+Defined in: [src/plugins.ts:146](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L146)
 
 ___
 
@@ -202,7 +210,7 @@ ___
 
 **Returns:** (`_`: *Record*<string, any\>, `value`: *any*) => *any*
 
-Defined in: [src/plugins.ts:117](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L117)
+Defined in: [src/plugins.ts:157](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L157)
 
 ___
 
@@ -219,7 +227,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/plugins.ts:83](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L83)
+Defined in: [src/plugins.ts:123](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L123)
 
 ___
 
@@ -243,7 +251,7 @@ ___
 
 **Returns:** *Record*<string, [*Factory*](plugins.md#factory)<X\>\>
 
-Defined in: [src/plugins.ts:47](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L47)
+Defined in: [src/plugins.ts:49](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L49)
 
 ___
 
@@ -267,7 +275,7 @@ ___
 
 **Returns:** *Promise*<Record<string, [*Factory*](plugins.md#factory)<X\>\>\>
 
-Defined in: [src/plugins.ts:36](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L36)
+Defined in: [src/plugins.ts:38](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L38)
 
 ___
 
@@ -291,7 +299,7 @@ ___
 
 **Returns:** *Promise*<Record<string, [*Factory*](plugins.md#factory)<X\>\>\>
 
-Defined in: [src/plugins.ts:22](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L22)
+Defined in: [src/plugins.ts:24](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L24)
 
 ___
 
@@ -307,7 +315,7 @@ ___
 
 **Returns:** *Record*<string, any\>
 
-Defined in: [src/plugins.ts:59](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L59)
+Defined in: [src/plugins.ts:63](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L63)
 
 ___
 
@@ -325,4 +333,4 @@ ___
 
 **Returns:** *Record*<string, any\>
 
-Defined in: [src/plugins.ts:95](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L95)
+Defined in: [src/plugins.ts:135](https://github.com/wholebuzz/mapreduce/blob/master/src/plugins.ts#L135)

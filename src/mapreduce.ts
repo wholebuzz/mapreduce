@@ -60,7 +60,11 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
   }
 
   // Find input splits
-  if (!args.inputSplits) args.inputSplits = await getSplits(args.fileSystem, args.inputPaths)
+  if (!args.inputSplits) {
+    args.inputSplits = inputIsSqlDatabase(args.inputType)
+      ? new Array(args.inputShards || 1).fill({ url: '' })
+      : await getSplits(args.fileSystem, args.inputPaths)
+  }
   await args.fileSystem.ensureDirectory(shuffleDirectory)
 
   // map phase
@@ -82,6 +86,8 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
               url: args.inputSplits[inputSplit].url,
             },
           ],
+      inputShardIndex: inputSplit,
+      orderBy: args.inputShardBy ? [ args.inputShardBy ] : undefined,
       // dir/shuffle-SSSS-of-NNNN.inputshard-0000-of-0004.jsonl.gz
       outputFile:
         (args.unpatchReduce ? args.outputPath : shuffleDirectory + `${shuffleFilenameFormat}`) +
