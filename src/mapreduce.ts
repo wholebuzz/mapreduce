@@ -47,6 +47,9 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
   if (!shuffleDirectory.endsWith('/')) throw new Error('shuffleDirectory should end with slash')
   if (args.logger) {
     args.logger.info(`mapReduce configuration ${JSON.stringify(args.configuration ?? {})}`)
+    if ((args.inputShardFilter || args.outputShardFilter) && !args.shuffleDirectory) {
+      args.logger.info(`WARNING: no shuffleDirectory specified`)
+    }
   }
 
   // Since local files show partial writes they need extra synchronization
@@ -87,7 +90,7 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
             },
           ],
       inputShardIndex: inputSplit,
-      orderBy: args.inputShardBy ? [ args.inputShardBy ] : undefined,
+      orderBy: args.inputShardBy ? [args.inputShardBy] : undefined,
       // dir/shuffle-SSSS-of-NNNN.inputshard-0000-of-0004.jsonl.gz
       outputFile:
         (args.unpatchReduce ? args.outputPath : shuffleDirectory + `${shuffleFilenameFormat}`) +

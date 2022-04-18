@@ -282,7 +282,15 @@ async function main() {
           throw new Error('No outputPath')
         }
         try {
-          await mapReduce(await prepareRuntime(fileSystem, logger, { ...options, configuration }))
+          await mapReduce(
+            await prepareRuntime(fileSystem, logger, {
+              ...options,
+              configuration: {
+                ...options.configuration,
+                ...configuration,
+              },
+            })
+          )
           returnValue = { inputPaths: args.inputPaths, outputPath: args.outputPath }
         } catch (err) {
           logger.info(err.message)

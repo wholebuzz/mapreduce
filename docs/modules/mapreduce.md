@@ -28,7 +28,7 @@
 
 **Returns:** <Key, Value\>(`mapper`: [*Mapper*](../interfaces/types.mapper.md)<Key, Value\>, `combiner`: [*Reducer*](../interfaces/types.reducer.md)<Key, Value\> \| *undefined*, `args`: [*MapReduceRuntimeConfig*](../interfaces/types.mapreduceruntimeconfig.md)<Key, Value\>, `options`: DatabaseCopyOptions) => *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:201](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L201)
+Defined in: [src/mapreduce.ts:204](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L204)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 **Returns:** *Promise*<[*InputSplit*](../interfaces/config.inputsplit.md)[]\>
 
-Defined in: [src/mapreduce.ts:346](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L346)
+Defined in: [src/mapreduce.ts:349](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L349)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:278](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L278)
+Defined in: [src/mapreduce.ts:281](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L281)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:238](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L238)
+Defined in: [src/mapreduce.ts:241](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L241)
 
 ___
 
@@ -149,4 +149,4 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:212](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L212)
+Defined in: [src/mapreduce.ts:215](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L215)
