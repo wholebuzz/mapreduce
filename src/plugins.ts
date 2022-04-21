@@ -4,6 +4,7 @@ import { readableToString } from '@wholebuzz/fs/lib/stream'
 import parseKeyValue from 'parse-key-value-pair'
 import { parse as pathParse } from 'path'
 import yargs from 'yargs'
+import { Configuration } from './types'
 
 export const requireFromString = require('require-from-string')
 
@@ -58,6 +59,17 @@ export function loadPlugin<X>(
     }
   }
   return out
+}
+
+export function loadConfigurationCode(configuration: Configuration, suffix = 'Code') {
+  for (const key of Object.keys(configuration)) {
+    if (!key.endsWith(suffix)) continue
+    // tslint:disable-next-line
+    const fn = eval(configuration[key])
+    if (typeof fn !== 'function') throw new Error(`loadConfigurationCode`)
+    configuration[key.substring(0, key.length - suffix.length)] = fn
+  }
+  return configuration
 }
 
 export function parseConfiguration(input?: string | string[]) {

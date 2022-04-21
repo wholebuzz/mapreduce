@@ -20,7 +20,12 @@ const {
 const dotenv = require('dotenv')
 const yargs = require('yargs')
 const { mapReduce } = require('./mapreduce')
-const { applyJobConfigToYargs, deduplicateYargs, parseConfiguration } = require('./plugins')
+const {
+  applyJobConfigToYargs,
+  deduplicateYargs,
+  parseConfiguration,
+  loadConfigurationCode,
+} = require('./plugins')
 const { getName, getUser, getWorkDirectory, newJobId, prepareRuntime } = require('./runtime')
 const { MapperImplementation } = require('./types')
 
@@ -285,10 +290,10 @@ async function main() {
           await mapReduce(
             await prepareRuntime(fileSystem, logger, {
               ...options,
-              configuration: {
+              configuration: loadConfigurationCode({
                 ...options.configuration,
                 ...configuration,
-              },
+              }),
             })
           )
           returnValue = { inputPaths: args.inputPaths, outputPath: args.outputPath }

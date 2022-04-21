@@ -41,6 +41,7 @@ export interface MapContext<Key, Value> extends Context<Key, Value> {
 
 export interface ReduceContext<Key, Value> extends Context<Key, Value> {
   currentItem: Item[]
+  currentItemSource?: string[]
   currentValue: Value[]
 }
 

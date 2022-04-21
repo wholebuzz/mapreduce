@@ -11,6 +11,8 @@ export interface Configuration extends Record<string, any> {
 
 export interface InputSplit {
   url: string
+  shardIndex?: number
+  numShards?: number
 }
 
 export enum MapperImplementation {

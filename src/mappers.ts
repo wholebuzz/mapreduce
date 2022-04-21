@@ -1,9 +1,23 @@
 import pSettle from 'p-settle'
-import type { Context, Mapper } from './types'
+import { getConfigurationValue } from './runtime'
+import type { Context, Mapper, MapReduceRuntimeConfig } from './types'
 
 export class IdentityMapper<Key, Value> implements Mapper<Key, Value> {
   map(key: Key, value: Value, context: Context<Key, Value>) {
     context.write(key, value)
+  }
+}
+
+export class TransformMapper<Key, Value> implements Mapper<Key, Value> {
+  transform!: (value: Value, key?: Key) => Value
+
+  configure(config: MapReduceRuntimeConfig<Key, Value>) {
+    this.transform = getConfigurationValue(config.configuration, 'transform', 'function')
+  }
+
+  map(key: Key, value: Value, context: Context<Key, Value>) {
+    value = this.transform(value, key)
+    if (value) context.write(key, value)
   }
 }
 

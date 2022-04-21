@@ -1,9 +1,10 @@
 import { DirectoryEntry, FileSystem } from '@wholebuzz/fs/lib/fs'
 import { writeJSON } from '@wholebuzz/fs/lib/json'
-import { streamFilter } from '@wholebuzz/fs/lib/stream'
+import { openNullWritable, streamFilter } from '@wholebuzz/fs/lib/stream'
 import {
   isShardedFilename,
   readShardFilenames,
+  Shard,
   shardedFilename,
   waitForCompleteShardedInput,
 } from '@wholebuzz/fs/lib/util'
@@ -40,11 +41,18 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
   const localDirectory = (args.localDirectory ?? defaultDiretory) + subdir
   const shuffleDirectory = (args.shuffleDirectory ?? defaultDiretory) + subdir
   const outputShards = args.outputShards || 1
+  const isNullOutput = args.outputPath === '/dev/null'
   const runMapPhase = getMapperImplementation(args.mapperImplementation, !!args.combinerClass)
 
   // Validate input
   if (!localDirectory.endsWith('/')) throw new Error('localDirectory should end with slash')
   if (!shuffleDirectory.endsWith('/')) throw new Error('shuffleDirectory should end with slash')
+  if (isNullOutput) {
+    if (outputShards !== 1) throw new Error(`null output with outputShards ${outputShards}`)
+    if (!args.unpatchMap && !args.unpatchReduce) {
+      throw new Error(`null output without unpatchMap or unpatchReduce`)
+    }
+  }
   if (args.logger) {
     args.logger.info(`mapReduce configuration ${JSON.stringify(args.configuration ?? {})}`)
     if ((args.inputShardFilter || args.outputShardFilter) && !args.shuffleDirectory) {
@@ -69,6 +77,9 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
       : await getSplits(args.fileSystem, args.inputPaths)
   }
   await args.fileSystem.ensureDirectory(shuffleDirectory)
+  if (args.unpatchMap && args.logger) {
+    args.logger.info(`Unpatching Mapper with inputSplits=${JSON.stringify(args.inputSplits)}`)
+  }
 
   // map phase
   const runMap = args.runMap !== false && !args.unpatchMap
@@ -92,10 +103,12 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
       inputShardIndex: inputSplit,
       orderBy: args.inputShardBy ? [args.inputShardBy] : undefined,
       // dir/shuffle-SSSS-of-NNNN.inputshard-0000-of-0004.jsonl.gz
-      outputFile:
-        (args.unpatchReduce ? args.outputPath : shuffleDirectory + `${shuffleFilenameFormat}`) +
-        `.${inputshard}.${shuffleFormat}`,
+      outputFile: isNullOutput
+        ? undefined
+        : (args.unpatchReduce ? args.outputPath : shuffleDirectory + `${shuffleFilenameFormat}`) +
+          `.${inputshard}.${shuffleFormat}`,
       outputShards,
+      outputStream: isNullOutput ? [openNullWritable()] : undefined,
       tempDirectories: localDirectories,
     }
 
@@ -142,7 +155,7 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
       ...assignDatabaseCopyOutputProperties({}, args),
       orderBy: [keyProperty],
       inputFiles: args.unpatchMap
-        ? args.inputSplits.map((x) => ({
+        ? getMatchingInputSplits(args.inputSplits, shard).map((x) => ({
             url: x.url,
           }))
         : [
@@ -157,14 +170,16 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
       outputFile: shardedFilename(args.outputPath, shard),
     }
 
-    const waitForUrl = args.synchronizeMap
-      ? shuffleDirectory + synchronizeMapFilenameFormat
-      : options.inputFiles[0].url
-    args.logger?.debug(`Wait for ${waitForUrl}@${args.inputSplits.map((x) => x.url)}`)
-    await waitForCompleteShardedInput(args.fileSystem, waitForUrl, {
-      shards: args.inputSplits.length,
-    })
-    args.logger?.debug(`Found ${waitForUrl}`)
+    if (!args.unpatchMap) {
+      const waitForUrl = args.synchronizeMap
+        ? shuffleDirectory + synchronizeMapFilenameFormat
+        : options.inputFiles[0].url
+      args.logger?.debug(`Wait for ${waitForUrl}@${args.inputSplits.map((x) => x.url)}`)
+      await waitForCompleteShardedInput(args.fileSystem, waitForUrl, {
+        shards: args.inputSplits.length,
+      })
+      args.logger?.debug(`Found ${waitForUrl}`)
+    }
 
     if (!args.reducerClass) throw new Error('No reducer')
     const reducer = factoryConstruct(args.reducerClass)
@@ -212,6 +227,35 @@ export function getMapperImplementation(type?: MapperImplementation, hasCombiner
   }
 }
 
+export function getMatchingInputSplits(inputSplits: InputSplit[], outputShard: Shard) {
+  return inputSplits.filter((inputSplit) => {
+    if (!inputSplit.numShards || inputSplit.shardIndex === undefined) return true
+    if (outputShard.modulus === inputSplit.numShards) {
+      return inputSplit.shardIndex === outputShard.index
+    }
+    if (
+      inputSplit.numShards % outputShard.modulus !== 0 &&
+      outputShard.modulus % inputSplit.numShards !== 0
+    ) {
+      throw new Error(
+        `Can't match ${JSON.stringify(inputSplit)} with ${JSON.stringify(outputShard)}}`
+      )
+    }
+    if (inputSplit.numShards < outputShard.modulus) {
+      const N = outputShard.modulus / inputSplit.numShards
+      for (let i = 0; i < N; i++) {
+        if (outputShard.index === inputSplit.shardIndex + i * inputSplit.numShards) return true
+      }
+    } else {
+      const N = inputSplit.numShards / outputShard.modulus
+      for (let i = 0; i < N; i++) {
+        if (inputSplit.shardIndex === outputShard.index + i * outputShard.modulus) return true
+      }
+    }
+    return false
+  })
+}
+
 export async function runReducePhase<Key, Value>(
   reducer: Reducer<Key, Value>,
   args: MapReduceRuntimeConfig<Key, Value>,
@@ -221,6 +265,7 @@ export async function runReducePhase<Key, Value>(
     ...options,
     group: true,
     groupLabels: true,
+    outputShards: undefined,
   }
   if (args.logger) {
     args.logger.info(
@@ -352,7 +397,11 @@ export async function getSplits(fileSystem: FileSystem, inputPaths: string[]) {
     if (isShardedFilename(path)) {
       const numShards = (await readShardFilenames(fileSystem, path)).numShards
       for (let i = 0; i < numShards; i++) {
-        inputSplits.push({ url: shardedFilename(inputPaths[0], { index: i, modulus: numShards }) })
+        inputSplits.push({
+          url: shardedFilename(path, { index: i, modulus: numShards }),
+          shardIndex: i,
+          numShards,
+        })
       }
     } else if (path.endsWith('/')) {
       const directoryStream = await fileSystem.readDirectoryStream(path, { recursive: true })

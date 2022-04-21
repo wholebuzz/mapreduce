@@ -9,7 +9,7 @@ infrastructure.
 For a full example, see [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 
 `@wholebuzz/mapreduce` operates on databases of rows, usually expressed as `SSSS-of-NNNN` sharded flat files
-in (gzipped) [JSON Lines](https://jsonlines.org/) format.
+in [Apache Parquet](https://parquet.apache.org/) or (gzipped) [JSON Lines](https://jsonlines.org/) format.
 
 The API and CLI mostly follow [Hadoop MapReduce](https://hadoop.apache.org/) except that each
 [MapContext](docs/interfaces/types.mapcontext.md) and [ReduceContext](docs/interfaces/types.reducecontext.md)
@@ -46,8 +46,10 @@ may be preferred.
 
 ### Sort (and shard) the [supplied test data](https://github.com/wholebuzz/mapreduce/tree/main/test) by `guid`
 
+Also converts from JSON to JSON Lines.
+
 ```console
-$ yarn mapreduce \
+$ yarn mapreduce -v \
   --map IdentityMapper \
   --reduce IdentityReducer \
   --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
@@ -58,8 +60,10 @@ $ yarn mapreduce \
 
 ### Re-sort (and shard) the output of the previous command by `id`
 
+And convert from JSON Lines back to JSON.
+
 ```console
-$ yarn mapreduce \
+$ yarn mapreduce -v \
   --map IdentityMapper \
   --reduce IdentityReducer \
   --inputPaths ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
@@ -83,7 +87,7 @@ $ diff ./test-id-sorted-0003-of-0004.json.gz ./test/test-0003-of-0004.json.gz
 
 ```console
 $ export MY_JOB_ID=`yarn --silent mapreduce job --new | tail -1 | jq -r ".jobid"`
-$ for ((i = 0; i < 3; i++)); do yarn mapreduce \
+$ for ((i = 0; i < 3; i++)); do yarn mapreduce -v \
   --jobid $MY_JOB_ID \
   --map IdentityMapper \
   --reduce IdentityReducer \
@@ -107,7 +111,7 @@ $ export MY_JOB_CONFIG=`yarn --silent mapreduce job --new \
   --numWorkers 3 \
   -D keyProperty=guid \
   | tail -1`
-$ for ((i = 0; i < 3; i++)); do yarn mapreduce --jobConfig "$MY_JOB_CONFIG" --workerIndex $i &; done
+$ for ((i = 0; i < 3; i++)); do yarn mapreduce -v --jobConfig "$MY_JOB_CONFIG" --workerIndex $i &; done
 ```
 
 ### Sort the supplied test data by `guid` using three containerized workers
@@ -134,10 +138,63 @@ $ for ((i = 0; i < 3; i++)); do docker run -d -e "RUN_ARGS= \
 - Supply `s3://` or `gs://` URLs for `--inputPaths`, `--outputPath`, and `--shuffleDirectory`.
 - Use your preferred scheduler to start the workers (e.g. Airflow, Hadoop, Kubeflow, Kubernetes, EC2, or GCE). See [mapreduce-example](https://github.com/wholebuzz/mapreduce-example).
 
-## Database input
+## Example of transforming the data with `TransformMapper`
+
+Configuration variables ending in `Code` will be `eval()`'d.
 
 ```console
-$ yarn mapreduce \
+$ yarn mapreduce -v \
+  --map TransformMapper \
+  --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
+  --outputPath ./test-md5-SSSS-of-NNNN.jsonl.gz \
+  --outputShards 4 \
+  -D keyProperty=guid \
+  -D transformCode="const { md5 } = require('@wholebuzz/fs/lib/util'); (x) => ({ guid: x.guid, hash: md5(x.guid) })"
+```
+
+## Example of logging the data with `TransformMapper`
+
+The special path `/dev/null` writes no output.
+
+```console
+$ yarn mapreduce -v \
+  --map TransformMapper \
+  --unpatchReduce \
+  --inputPaths ./test/test-SSSS-of-NNNN.json.gz \
+  --outputPath /dev/null \
+  -D transformCode="(x) => console.log('Hello row', x)"
+```
+
+## Example merging two sharded datasets with streaming K-way merge sort
+
+```console
+$ yarn mapreduce -v \
+  --unpatchMap \
+  --reduce MergePropertiesReducer \
+  --inputPaths ./test-md5-SSSS-of-NNNN.jsonl.gz ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
+  --outputPath ./test-merge-SSSS-of-NNNN.jsonl.gz \
+  --outputShards 4 \
+  -D keyProperty=guid
+```
+
+## Same example but aggregating distinct records instead of combining
+
+```console
+$ yarn mapreduce -v \
+  --unpatchMap \
+  --reduce MergeNamedValuesReducer \
+  --inputPaths ./test-md5-SSSS-of-NNNN.jsonl.gz ./test-guid-sorted-SSSS-of-NNNN.jsonl.gz \
+  --outputPath ./test-merge-SSSS-of-NNNN.jsonl.gz \
+  --outputShards 4 \
+  -D keyProperty=guid
+```
+
+## Example using a Postgres database for input
+
+Add `DEBUG=knex:query` to your environment to see the (sharded) queries.
+
+```console
+$ yarn mapreduce -v \
   --inputType postgresql \
   --inputName postgres \
   --inputHost localhost \

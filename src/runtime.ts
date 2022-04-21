@@ -49,6 +49,19 @@ export function getWorkDirectory(user: string, jobid: string) {
   return `taskTracker/${user}/jobcache/${jobid}/work/`
 }
 
+export function getConfigurationValue<X>(
+  configuration: Configuration | undefined,
+  key: string,
+  type?: string
+): X {
+  const val = configuration?.[key]
+  console.log('wtf', key, val, type, typeof val)
+  if (type && typeof val !== type) {
+    throw new Error(`getConfiguration ${key} got ${typeof val} expected ${type}`)
+  }
+  return val
+}
+
 export function getShardFilter(workerIndex: number, numWorkers: number) {
   return numWorkers > 1 ? (index: number) => index % numWorkers === workerIndex : undefined
 }
@@ -234,9 +247,17 @@ export function reduceTransform<Key, Value>(
   transform = new Transform({
     objectMode: true,
     transform(data, _, callback) {
-      context.currentItem = Array.isArray(data)
-        ? data.map((x: { source: string; value: Record<string, any> }) => x.value)
-        : [data]
+      if (Array.isArray(data)) {
+        context.currentItem = []
+        context.currentItemSource = []
+        for (const x of data) {
+          context.currentItem.push(x.value)
+          context.currentItemSource.push(x.source)
+        }
+      } else {
+        context.currentItem = [data]
+        context.currentItemSource = undefined
+      }
       context.currentKey = getItemKey(context.currentItem[0])
       context.currentValue = context.currentItem.map(getItemValue)
       if (!context.currentKey && !warnedReadFalsyKey) {
