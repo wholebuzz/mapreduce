@@ -13,6 +13,7 @@ export interface InputSplit {
   url: string
   shardIndex?: number
   numShards?: number
+  parquetRowGroupRange?: [number, number]
 }
 
 export enum MapperImplementation {

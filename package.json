@@ -33,7 +33,7 @@
     "dist/**/*"
   ],
   "dependencies": {
-    "dbcp": "^1.4.8",
+    "dbcp": "^1.4.9",
     "level": "^7.0.0",
     "parse-key-value-pair": "^1.1.2",
     "require-from-string": "^2.0.2",
