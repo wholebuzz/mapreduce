@@ -10,10 +10,11 @@ export interface Configuration extends Record<string, any> {
 }
 
 export interface InputSplit {
+  byteOffsetRange?: [number, number]
   url: string
-  shardIndex?: number
   numShards?: number
   parquetRowGroupRange?: [number, number]
+  shardIndex?: number
 }
 
 export enum MapperImplementation {
@@ -29,6 +30,7 @@ export interface MapReduceBaseConfig extends DatabaseCopyInput, DatabaseCopyOutp
   inputPaths: string[]
   inputOptions?: DatabaseCopyInput
   inputSplits?: InputSplit[]
+  inputSplitSize?: number
   localDirectory?: string
   mapperImplementation?: MapperImplementation
   outputPath: string

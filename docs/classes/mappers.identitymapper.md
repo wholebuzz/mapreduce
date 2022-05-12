@@ -58,4 +58,4 @@
 
 Implementation of: Mapper.map
 
-Defined in: [src/mappers.ts:5](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L5)
+Defined in: [src/mappers.ts:6](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L6)

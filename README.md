@@ -299,4 +299,5 @@ of the stages of Shuffle and Reduce.
 - [plugins](docs/modules/plugins.md)
 - [reducers](docs/modules/reducers.md)
 - [runtime](docs/modules/runtime.md)
+- [splits](docs/modules/splits.md)
 - [types](docs/modules/types.md)

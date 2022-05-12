@@ -35,6 +35,7 @@
 - [inputShardFunction](config.mapreducejobconfig.md#inputshardfunction)
 - [inputShardIndex](config.mapreducejobconfig.md#inputshardindex)
 - [inputShards](config.mapreducejobconfig.md#inputshards)
+- [inputSplitSize](config.mapreducejobconfig.md#inputsplitsize)
 - [inputSplits](config.mapreducejobconfig.md#inputsplits)
 - [inputStream](config.mapreducejobconfig.md#inputstream)
 - [inputTable](config.mapreducejobconfig.md#inputtable)
@@ -82,7 +83,7 @@
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[cleanup](config.mapreducebaseconfig.md#cleanup)
 
-Defined in: [src/config.ts:23](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L23)
+Defined in: [src/config.ts:27](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L27)
 
 ___
 
@@ -90,7 +91,7 @@ ___
 
 • `Optional` **combine**: *string*
 
-Defined in: [src/config.ts:42](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L42)
+Defined in: [src/config.ts:47](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L47)
 
 ___
 
@@ -98,7 +99,7 @@ ___
 
 • `Optional` **config**: *string*[]
 
-Defined in: [src/config.ts:43](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L43)
+Defined in: [src/config.ts:48](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L48)
 
 ___
 
@@ -108,7 +109,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[configuration](config.mapreducebaseconfig.md#configuration)
 
-Defined in: [src/config.ts:24](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L24)
+Defined in: [src/config.ts:28](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L28)
 
 ___
 
@@ -118,7 +119,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputConnection](config.mapreducebaseconfig.md#inputconnection)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:27
+Defined in: node_modules/dbcp/dist/index.d.ts:29
 
 ___
 
@@ -128,7 +129,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputElasticSearch](config.mapreducebaseconfig.md#inputelasticsearch)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:28
+Defined in: node_modules/dbcp/dist/index.d.ts:30
 
 ___
 
@@ -138,7 +139,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputFiles](config.mapreducebaseconfig.md#inputfiles)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:30
+Defined in: node_modules/dbcp/dist/index.d.ts:32
 
 ___
 
@@ -148,7 +149,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputFormat](config.mapreducebaseconfig.md#inputformat)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:29
+Defined in: node_modules/dbcp/dist/index.d.ts:31
 
 ___
 
@@ -158,7 +159,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputHost](config.mapreducebaseconfig.md#inputhost)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:31
+Defined in: node_modules/dbcp/dist/index.d.ts:33
 
 ___
 
@@ -168,7 +169,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputKnex](config.mapreducebaseconfig.md#inputknex)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:35
+Defined in: node_modules/dbcp/dist/index.d.ts:37
 
 ___
 
@@ -178,7 +179,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputLeveldb](config.mapreducebaseconfig.md#inputleveldb)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:32
+Defined in: node_modules/dbcp/dist/index.d.ts:34
 
 ___
 
@@ -188,7 +189,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputMongodb](config.mapreducebaseconfig.md#inputmongodb)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:33
+Defined in: node_modules/dbcp/dist/index.d.ts:35
 
 ___
 
@@ -198,7 +199,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputName](config.mapreducebaseconfig.md#inputname)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:34
+Defined in: node_modules/dbcp/dist/index.d.ts:36
 
 ___
 
@@ -208,7 +209,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputOptions](config.mapreducebaseconfig.md#inputoptions)
 
-Defined in: [src/config.ts:27](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L27)
+Defined in: [src/config.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L31)
 
 ___
 
@@ -218,7 +219,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputPassword](config.mapreducebaseconfig.md#inputpassword)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:36
+Defined in: node_modules/dbcp/dist/index.d.ts:38
 
 ___
 
@@ -228,7 +229,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputPaths](config.mapreducebaseconfig.md#inputpaths)
 
-Defined in: [src/config.ts:26](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L26)
+Defined in: [src/config.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L30)
 
 ___
 
@@ -238,7 +239,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputPort](config.mapreducebaseconfig.md#inputport)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:44
+Defined in: node_modules/dbcp/dist/index.d.ts:46
 
 ___
 
@@ -248,7 +249,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputShardBy](config.mapreducebaseconfig.md#inputshardby)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:37
+Defined in: node_modules/dbcp/dist/index.d.ts:39
 
 ___
 
@@ -258,7 +259,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputShardFunction](config.mapreducebaseconfig.md#inputshardfunction)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:38
+Defined in: node_modules/dbcp/dist/index.d.ts:40
 
 ___
 
@@ -268,7 +269,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputShardIndex](config.mapreducebaseconfig.md#inputshardindex)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:39
+Defined in: node_modules/dbcp/dist/index.d.ts:41
 
 ___
 
@@ -278,7 +279,17 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputShards](config.mapreducebaseconfig.md#inputshards)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:40
+Defined in: node_modules/dbcp/dist/index.d.ts:42
+
+___
+
+### inputSplitSize
+
+• `Optional` **inputSplitSize**: *number*
+
+Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputSplitSize](config.mapreducebaseconfig.md#inputsplitsize)
+
+Defined in: [src/config.ts:33](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L33)
 
 ___
 
@@ -288,7 +299,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputSplits](config.mapreducebaseconfig.md#inputsplits)
 
-Defined in: [src/config.ts:28](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L28)
+Defined in: [src/config.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L32)
 
 ___
 
@@ -298,7 +309,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputStream](config.mapreducebaseconfig.md#inputstream)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:41
+Defined in: node_modules/dbcp/dist/index.d.ts:43
 
 ___
 
@@ -308,7 +319,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputTable](config.mapreducebaseconfig.md#inputtable)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:42
+Defined in: node_modules/dbcp/dist/index.d.ts:44
 
 ___
 
@@ -318,7 +329,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputType](config.mapreducebaseconfig.md#inputtype)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:43
+Defined in: node_modules/dbcp/dist/index.d.ts:45
 
 ___
 
@@ -328,7 +339,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[inputUser](config.mapreducebaseconfig.md#inputuser)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:45
+Defined in: node_modules/dbcp/dist/index.d.ts:47
 
 ___
 
@@ -338,7 +349,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[jobid](config.mapreducebaseconfig.md#jobid)
 
-Defined in: [src/config.ts:25](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L25)
+Defined in: [src/config.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L29)
 
 ___
 
@@ -348,7 +359,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[localDirectory](config.mapreducebaseconfig.md#localdirectory)
 
-Defined in: [src/config.ts:29](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L29)
+Defined in: [src/config.ts:34](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L34)
 
 ___
 
@@ -356,7 +367,7 @@ ___
 
 • `Optional` **map**: *string*
 
-Defined in: [src/config.ts:44](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L44)
+Defined in: [src/config.ts:49](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L49)
 
 ___
 
@@ -366,7 +377,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[mapperImplementation](config.mapreducebaseconfig.md#mapperimplementation)
 
-Defined in: [src/config.ts:30](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L30)
+Defined in: [src/config.ts:35](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L35)
 
 ___
 
@@ -374,7 +385,7 @@ ___
 
 • **numWorkers**: *number*
 
-Defined in: [src/config.ts:45](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L45)
+Defined in: [src/config.ts:50](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L50)
 
 ___
 
@@ -384,7 +395,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputConnection](config.mapreducebaseconfig.md#outputconnection)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:48
+Defined in: node_modules/dbcp/dist/index.d.ts:50
 
 ___
 
@@ -394,7 +405,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputElasticSearch](config.mapreducebaseconfig.md#outputelasticsearch)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:49
+Defined in: node_modules/dbcp/dist/index.d.ts:51
 
 ___
 
@@ -404,7 +415,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputFile](config.mapreducebaseconfig.md#outputfile)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:51
+Defined in: node_modules/dbcp/dist/index.d.ts:53
 
 ___
 
@@ -414,7 +425,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputFormat](config.mapreducebaseconfig.md#outputformat)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:50
+Defined in: node_modules/dbcp/dist/index.d.ts:52
 
 ___
 
@@ -424,7 +435,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputHost](config.mapreducebaseconfig.md#outputhost)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:52
+Defined in: node_modules/dbcp/dist/index.d.ts:54
 
 ___
 
@@ -434,7 +445,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputKnex](config.mapreducebaseconfig.md#outputknex)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:53
+Defined in: node_modules/dbcp/dist/index.d.ts:55
 
 ___
 
@@ -444,7 +455,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputLeveldb](config.mapreducebaseconfig.md#outputleveldb)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:54
+Defined in: node_modules/dbcp/dist/index.d.ts:56
 
 ___
 
@@ -454,7 +465,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputMongodb](config.mapreducebaseconfig.md#outputmongodb)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:55
+Defined in: node_modules/dbcp/dist/index.d.ts:57
 
 ___
 
@@ -464,7 +475,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputName](config.mapreducebaseconfig.md#outputname)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:56
+Defined in: node_modules/dbcp/dist/index.d.ts:58
 
 ___
 
@@ -474,7 +485,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputPassword](config.mapreducebaseconfig.md#outputpassword)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:57
+Defined in: node_modules/dbcp/dist/index.d.ts:59
 
 ___
 
@@ -484,7 +495,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputPath](config.mapreducebaseconfig.md#outputpath)
 
-Defined in: [src/config.ts:31](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L31)
+Defined in: [src/config.ts:36](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L36)
 
 ___
 
@@ -494,7 +505,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputPort](config.mapreducebaseconfig.md#outputport)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:63
+Defined in: node_modules/dbcp/dist/index.d.ts:65
 
 ___
 
@@ -504,7 +515,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputShardFunction](config.mapreducebaseconfig.md#outputshardfunction)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:58
+Defined in: node_modules/dbcp/dist/index.d.ts:60
 
 ___
 
@@ -514,7 +525,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputShards](config.mapreducebaseconfig.md#outputshards)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:59
+Defined in: node_modules/dbcp/dist/index.d.ts:61
 
 ___
 
@@ -524,7 +535,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputStream](config.mapreducebaseconfig.md#outputstream)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:60
+Defined in: node_modules/dbcp/dist/index.d.ts:62
 
 ___
 
@@ -534,7 +545,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputTable](config.mapreducebaseconfig.md#outputtable)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:61
+Defined in: node_modules/dbcp/dist/index.d.ts:63
 
 ___
 
@@ -544,7 +555,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputType](config.mapreducebaseconfig.md#outputtype)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:62
+Defined in: node_modules/dbcp/dist/index.d.ts:64
 
 ___
 
@@ -554,7 +565,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[outputUser](config.mapreducebaseconfig.md#outputuser)
 
-Defined in: node_modules/dbcp/dist/index.d.ts:64
+Defined in: node_modules/dbcp/dist/index.d.ts:66
 
 ___
 
@@ -562,7 +573,7 @@ ___
 
 • `Optional` **plugins**: *string*[]
 
-Defined in: [src/config.ts:46](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L46)
+Defined in: [src/config.ts:51](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L51)
 
 ___
 
@@ -570,7 +581,7 @@ ___
 
 • `Optional` **reduce**: *string*
 
-Defined in: [src/config.ts:47](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L47)
+Defined in: [src/config.ts:52](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L52)
 
 ___
 
@@ -580,7 +591,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[runMap](config.mapreducebaseconfig.md#runmap)
 
-Defined in: [src/config.ts:32](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L32)
+Defined in: [src/config.ts:37](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L37)
 
 ___
 
@@ -590,7 +601,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[runReduce](config.mapreducebaseconfig.md#runreduce)
 
-Defined in: [src/config.ts:33](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L33)
+Defined in: [src/config.ts:38](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L38)
 
 ___
 
@@ -600,7 +611,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[shuffleDirectory](config.mapreducebaseconfig.md#shuffledirectory)
 
-Defined in: [src/config.ts:34](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L34)
+Defined in: [src/config.ts:39](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L39)
 
 ___
 
@@ -610,7 +621,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[synchronizeMap](config.mapreducebaseconfig.md#synchronizemap)
 
-Defined in: [src/config.ts:35](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L35)
+Defined in: [src/config.ts:40](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L40)
 
 ___
 
@@ -620,7 +631,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[synchronizeReduce](config.mapreducebaseconfig.md#synchronizereduce)
 
-Defined in: [src/config.ts:36](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L36)
+Defined in: [src/config.ts:41](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L41)
 
 ___
 
@@ -630,7 +641,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[unpatchMap](config.mapreducebaseconfig.md#unpatchmap)
 
-Defined in: [src/config.ts:37](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L37)
+Defined in: [src/config.ts:42](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L42)
 
 ___
 
@@ -640,7 +651,7 @@ ___
 
 Inherited from: [MapReduceBaseConfig](config.mapreducebaseconfig.md).[unpatchReduce](config.mapreducebaseconfig.md#unpatchreduce)
 
-Defined in: [src/config.ts:38](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L38)
+Defined in: [src/config.ts:43](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L43)
 
 ___
 
@@ -648,4 +659,4 @@ ___
 
 • **workerIndex**: *number*
 
-Defined in: [src/config.ts:48](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L48)
+Defined in: [src/config.ts:53](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L53)

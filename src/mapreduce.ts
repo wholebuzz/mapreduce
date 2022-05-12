@@ -1,17 +1,9 @@
-import { DirectoryEntry, FileSystem } from '@wholebuzz/fs/lib/fs'
 import { writeJSON } from '@wholebuzz/fs/lib/json'
-import { openNullWritable, streamFilter } from '@wholebuzz/fs/lib/stream'
-import {
-  isShardedFilename,
-  readShardFilenames,
-  Shard,
-  shardedFilename,
-  waitForCompleteShardedInput,
-} from '@wholebuzz/fs/lib/util'
+import { openNullWritable } from '@wholebuzz/fs/lib/stream'
+import { Shard, shardedFilename, waitForCompleteShardedInput } from '@wholebuzz/fs/lib/util'
 import { assignDatabaseCopyOutputProperties, DatabaseCopyOptions, dbcp } from 'dbcp'
 import { DatabaseCopyShardFunction, inputIsSqlDatabase } from 'dbcp/dist/format'
 import { updateObjectProperties } from 'dbcp/dist/util'
-import { pumpReadable } from 'tree-stream'
 import { runMapPhaseWithLevelDb } from './leveldb'
 import { factoryConstruct, getObjectClassName } from './plugins'
 import {
@@ -30,6 +22,7 @@ import {
   synchronizeMapFilenameFormat,
   synchronizeReduceFilenameFormat,
 } from './runtime'
+import { getSplits } from './splits'
 import { InputSplit, Mapper, MapperImplementation, MapReduceRuntimeConfig, Reducer } from './types'
 
 export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Value>) {
@@ -74,7 +67,7 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
   if (!args.inputSplits) {
     args.inputSplits = inputIsSqlDatabase(args.inputType)
       ? new Array(args.inputShards || 1).fill({ url: '' })
-      : await getSplits(args.fileSystem, args.inputPaths)
+      : await getSplits(args.fileSystem, args.inputPaths, args.inputSplitSize)
   }
   await args.fileSystem.ensureDirectory(shuffleDirectory)
   if (args.unpatchMap && args.logger) {
@@ -87,6 +80,7 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
     if (args.inputShardFilter && !args.inputShardFilter(inputSplit)) continue
     const shard = { index: inputSplit, modulus: args.inputSplits.length }
     const inputshard = shardedFilename(inputshardFilenameFormat, shard)
+    const currentSplit = args.inputSplits[inputSplit]
     const localDirectories = new Array(outputShards)
       .fill(localDirectory)
       .map((x, i) => x + `${localTempDirectoryPrefix}-input${inputSplit}-output${i}/`)
@@ -97,7 +91,17 @@ export async function mapReduce<Key, Value>(args: MapReduceRuntimeConfig<Key, Va
         ? undefined
         : [
             {
-              url: args.inputSplits[inputSplit].url,
+              url: currentSplit.url,
+              fileOptions: currentSplit.parquetRowGroupRange
+                ? {
+                    rowGroupRange: currentSplit.parquetRowGroupRange,
+                  }
+                : currentSplit.byteOffsetRange
+                ? {
+                    byteOffset: currentSplit.byteOffsetRange[0],
+                    byteLength: currentSplit.byteOffsetRange[1] - currentSplit.byteOffsetRange[0],
+                  }
+                : undefined,
             },
           ],
       inputShardIndex: inputSplit,
@@ -389,33 +393,4 @@ export async function runCleanupPhase<Key, Value>(
       }
     }
   }
-}
-
-export async function getSplits(fileSystem: FileSystem, inputPaths: string[]) {
-  const inputSplits: InputSplit[] = []
-  for (const path of inputPaths) {
-    if (isShardedFilename(path)) {
-      const numShards = (await readShardFilenames(fileSystem, path)).numShards
-      for (let i = 0; i < numShards; i++) {
-        inputSplits.push({
-          url: shardedFilename(path, { index: i, modulus: numShards }),
-          shardIndex: i,
-          numShards,
-        })
-      }
-    } else if (path.endsWith('/')) {
-      const directoryStream = await fileSystem.readDirectoryStream(path, { recursive: true })
-      await pumpReadable(
-        directoryStream.pipe(
-          streamFilter((file: DirectoryEntry) => {
-            inputSplits.push({ url: file.url })
-          })
-        ),
-        undefined
-      )
-    } else {
-      inputSplits.push({ url: path })
-    }
-  }
-  return inputSplits
 }

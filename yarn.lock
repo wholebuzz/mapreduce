@@ -1057,6 +1057,13 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
+"@types/node-int64@*":
+  version "0.4.29"
+  resolved "https://registry.yarnpkg.com/@types/node-int64/-/node-int64-0.4.29.tgz#8c7c16a7c1195ae4f8beaa903b0018ac66291d16"
+  integrity sha512-rHXvenLTj/CcsmNAebaBOhxQ2MqEGl3yXZZcZ21XYR+gzGTTcpOy2N4IxpvTCz48loyQNatHvfn6GhIbbZ1R3Q==
+  dependencies:
+    "@types/node" "*"
+
 "@types/node@*", "@types/node@>=13.7.0":
   version "17.0.21"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.21.tgz#864b987c0c68d07b4345845c3e63b75edd143644"
@@ -1071,6 +1078,13 @@
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/@types/normalize-package-data/-/normalize-package-data-2.4.1.tgz#d3357479a0fdfdd5907fe67e17e0a85c906e1301"
   integrity sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==
+
+"@types/parquetjs@^0.10.3":
+  version "0.10.3"
+  resolved "https://registry.yarnpkg.com/@types/parquetjs/-/parquetjs-0.10.3.tgz#55d51372943e22aa847704cbdfdbc31ebe5db7fe"
+  integrity sha512-n0xVEor3+3qHfCmFAf0pO4m/Pxc5JEmiVkEWWqJexN+p11/Nr+rqABKcIEj4X6tGKF1cnVIeBqy67mW2Yd+Kbg==
+  dependencies:
+    "@types/node-int64" "*"
 
 "@types/prettier@^2.0.0":
   version "2.4.4"
@@ -2067,16 +2081,17 @@ db-json-column@^0.0.3:
   resolved "https://registry.yarnpkg.com/db-json-column/-/db-json-column-0.0.3.tgz#b01153994da6712074d30d95f4f970946809a05d"
   integrity sha512-aEXyL6kZxVAJJ0jVmZNlAHIKnVTPgd976oLIOgFmfVGNdvn4q4zmpQrVp04lPlxT13ezeNc4zH1t0zUBcSiDeQ==
 
-dbcp@^1.4.9:
-  version "1.4.9"
-  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.9.tgz#0ef04bad4b6e6c914b0b2df14642e6f2d755ee9c"
-  integrity sha512-skdprZtpvdbQWxHgGyIhgd6TKIdkwOW4bso3TT1RUAF/QOShajOaox7nK2gu/XovijZgKNfSmHFnu3NYrKxj7A==
+dbcp@^1.4.10:
+  version "1.4.10"
+  resolved "https://registry.yarnpkg.com/dbcp/-/dbcp-1.4.10.tgz#91df8052b5dff68a96cc4986e0f1a5f6fc8806e3"
+  integrity sha512-czMbd68iTsk2FWij4I8JVHTTDfxe8Q/3NDSw2slaEztrG/eXQPBJQkgQ1GU+FPGa5v/8VSV8bhWU5Dx89fIjPw==
   dependencies:
     "@azure/identity" "^2.0.0"
     "@azure/storage-blob" "^12.8.0"
     "@elastic/elasticsearch" "^7.15.0"
     "@google-cloud/storage" "^5.8.1"
     "@marsaud/smb2" "^0.18.0"
+    "@types/parquetjs" "^0.10.3"
     "@wholebuzz/fs" "^1.2.9"
     athena-express "^7.1.3"
     aws-sdk "^2.975.0"
@@ -4144,6 +4159,13 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
+line-stream@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/line-stream/-/line-stream-1.0.0.tgz#d3e3853174803fd31369c0e4366cb0808b42ade7"
+  integrity sha1-0+OFMXSAP9MTacDkNmywgItCrec=
+  dependencies:
+    through2 "^2.0.0"
+
 lines-and-columns@^1.1.6:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
@@ -6029,20 +6051,20 @@ through2-filter@^3.0.0:
     through2 "~2.0.0"
     xtend "~4.0.0"
 
-through2@^4.0.0, through2@^4.0.2:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/through2/-/through2-4.0.2.tgz#a7ce3ac2a7a8b0b966c80e7c49f0484c3b239764"
-  integrity sha512-iOqSav00cVxEEICeD7TjLB1sueEL+81Wpzp2bY17uZjZN0pWZPuo4suZ/61VujxmqSGFfgOcNuTZ85QJwNZQpw==
-  dependencies:
-    readable-stream "3"
-
-through2@~2.0.0, through2@~2.0.3:
+through2@^2.0.0, through2@~2.0.0, through2@~2.0.3:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/through2/-/through2-2.0.5.tgz#01c1e39eb31d07cb7d03a96a70823260b23132cd"
   integrity sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ==
   dependencies:
     readable-stream "~2.3.6"
     xtend "~4.0.1"
+
+through2@^4.0.0, through2@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/through2/-/through2-4.0.2.tgz#a7ce3ac2a7a8b0b966c80e7c49f0484c3b239764"
+  integrity sha512-iOqSav00cVxEEICeD7TjLB1sueEL+81Wpzp2bY17uZjZN0pWZPuo4suZ/61VujxmqSGFfgOcNuTZ85QJwNZQpw==
+  dependencies:
+    readable-stream "3"
 
 "through@>=2.2.7 <3":
   version "2.3.8"

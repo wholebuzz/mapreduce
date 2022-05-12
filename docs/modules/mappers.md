@@ -9,3 +9,4 @@
 - [AsyncIterableMapper](../classes/mappers.asynciterablemapper.md)
 - [IdentityMapper](../classes/mappers.identitymapper.md)
 - [IterableMapper](../classes/mappers.iterablemapper.md)
+- [TransformMapper](../classes/mappers.transformmapper.md)

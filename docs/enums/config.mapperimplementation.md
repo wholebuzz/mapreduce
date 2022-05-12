@@ -17,7 +17,7 @@
 
 • **externalSorting**: = "externalSorting"
 
-Defined in: [src/config.ts:17](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L17)
+Defined in: [src/config.ts:21](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L21)
 
 ___
 
@@ -25,4 +25,4 @@ ___
 
 • **leveldb**: = "leveldb"
 
-Defined in: [src/config.ts:18](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L18)
+Defined in: [src/config.ts:22](https://github.com/wholebuzz/mapreduce/blob/master/src/config.ts#L22)

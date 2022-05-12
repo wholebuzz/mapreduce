@@ -23,6 +23,7 @@
 
 - [configuration](types.reducecontext.md#configuration)
 - [currentItem](types.reducecontext.md#currentitem)
+- [currentItemSource](types.reducecontext.md#currentitemsource)
 - [currentKey](types.reducecontext.md#currentkey)
 - [currentValue](types.reducecontext.md#currentvalue)
 - [keyProperty](types.reducecontext.md#keyproperty)
@@ -49,6 +50,14 @@ Defined in: [src/types.ts:43](https://github.com/wholebuzz/mapreduce/blob/master
 
 ___
 
+### currentItemSource
+
+• `Optional` **currentItemSource**: *string*[]
+
+Defined in: [src/types.ts:44](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L44)
+
+___
+
 ### currentKey
 
 • `Optional` **currentKey**: Key
@@ -63,7 +72,7 @@ ___
 
 • **currentValue**: Value[]
 
-Defined in: [src/types.ts:44](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L44)
+Defined in: [src/types.ts:45](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L45)
 
 ___
 

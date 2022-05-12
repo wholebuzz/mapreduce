@@ -51,7 +51,7 @@
 
 • **concurrency**: *number*= 1
 
-Defined in: [src/mappers.ts:25](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L25)
+Defined in: [src/mappers.ts:39](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L39)
 
 ## Methods
 
@@ -71,7 +71,7 @@ Defined in: [src/mappers.ts:25](https://github.com/wholebuzz/mapreduce/blob/mast
 
 Implementation of: Mapper.map
 
-Defined in: [src/mappers.ts:27](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L27)
+Defined in: [src/mappers.ts:41](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L41)
 
 ___
 
@@ -89,4 +89,4 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mappers.ts:41](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L41)
+Defined in: [src/mappers.ts:55](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L55)

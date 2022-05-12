@@ -19,7 +19,10 @@
 
 ## Implemented by
 
+- [*DeleteFalsyPropertiesReducer*](../classes/reducers.deletefalsypropertiesreducer.md)
 - [*IdentityReducer*](../classes/reducers.identityreducer.md)
+- [*MergeNamedValuesReducer*](../classes/reducers.mergenamedvaluesreducer.md)
+- [*MergePropertiesReducer*](../classes/reducers.mergepropertiesreducer.md)
 
 ## Table of contents
 
@@ -94,7 +97,7 @@ ___
 
 **Returns:** *void* \| *Promise*<void\>
 
-Defined in: [src/types.ts:52](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L52)
+Defined in: [src/types.ts:53](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L53)
 
 ___
 

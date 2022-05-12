@@ -59,7 +59,7 @@
 
 Implementation of: Mapper.map
 
-Defined in: [src/mappers.ts:11](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L11)
+Defined in: [src/mappers.ts:25](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L25)
 
 ___
 
@@ -77,4 +77,4 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/mappers.ts:19](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L19)
+Defined in: [src/mappers.ts:33](https://github.com/wholebuzz/mapreduce/blob/master/src/mappers.ts#L33)

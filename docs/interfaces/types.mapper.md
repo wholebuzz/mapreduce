@@ -22,6 +22,7 @@
 - [*AsyncIterableMapper*](../classes/mappers.asynciterablemapper.md)
 - [*IdentityMapper*](../classes/mappers.identitymapper.md)
 - [*IterableMapper*](../classes/mappers.iterablemapper.md)
+- [*TransformMapper*](../classes/mappers.transformmapper.md)
 
 ## Table of contents
 
@@ -96,7 +97,7 @@ ___
 
 **Returns:** *void* \| *Promise*<void\>
 
-Defined in: [src/types.ts:48](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L48)
+Defined in: [src/types.ts:49](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L49)
 
 ___
 

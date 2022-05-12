@@ -14,4 +14,5 @@
 - [plugins](modules/plugins.md)
 - [reducers](modules/reducers.md)
 - [runtime](modules/runtime.md)
+- [splits](modules/splits.md)
 - [types](modules/types.md)

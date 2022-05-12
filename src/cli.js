@@ -27,6 +27,7 @@ const {
   loadConfigurationCode,
 } = require('./plugins')
 const { getName, getUser, getWorkDirectory, newJobId, prepareRuntime } = require('./runtime')
+const { getSplits } = require('./splits')
 const { MapperImplementation } = require('./types')
 
 dotenv.config()
@@ -100,6 +101,10 @@ async function main() {
       },
       inputShards: {
         description: 'Input shards',
+        type: 'number',
+      },
+      inputSplitSize: {
+        description: 'Input split size',
         type: 'number',
       },
       inputTable: {
@@ -244,7 +249,7 @@ async function main() {
             type: 'boolean',
           },
         }),
-      (args) => {
+      async (args) => {
         if (args.new) {
           delete args.new
           const name = getName(configuration.name)
@@ -258,6 +263,9 @@ async function main() {
               user,
             },
             jobid,
+          }
+          if (returnValue.inputPaths) {
+            returnValue.splits = await getSplits(fileSystem, args.inputPaths, args.inputSplitSize)
           }
         } else {
           throw new Error('job command required')

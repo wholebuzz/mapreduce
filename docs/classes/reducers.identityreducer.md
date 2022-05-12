@@ -44,7 +44,7 @@
 
 ### reduce
 
-▸ **reduce**(`key`: Key, `values`: Value[], `context`: [*Context*](../interfaces/types.context.md)<Key, Value\>): *void*
+▸ **reduce**(`key`: Key, `values`: Value[], `context`: [*ReduceContext*](../interfaces/types.reducecontext.md)<Key, Value\>): *void*
 
 #### Parameters
 
@@ -52,10 +52,10 @@
 | :------ | :------ |
 | `key` | Key |
 | `values` | Value[] |
-| `context` | [*Context*](../interfaces/types.context.md)<Key, Value\> |
+| `context` | [*ReduceContext*](../interfaces/types.reducecontext.md)<Key, Value\> |
 
 **Returns:** *void*
 
 Implementation of: Reducer.reduce
 
-Defined in: [src/reducers.ts:4](https://github.com/wholebuzz/mapreduce/blob/master/src/reducers.ts#L4)
+Defined in: [src/reducers.ts:5](https://github.com/wholebuzz/mapreduce/blob/master/src/reducers.ts#L5)

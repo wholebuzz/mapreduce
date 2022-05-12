@@ -21,6 +21,7 @@
 ### Functions
 
 - [formatNumberForUtf8Sort](runtime.md#formatnumberforutf8sort)
+- [getConfigurationValue](runtime.md#getconfigurationvalue)
 - [getItemKeyAccessor](runtime.md#getitemkeyaccessor)
 - [getItemValueAccessor](runtime.md#getitemvalueaccessor)
 - [getName](runtime.md#getname)
@@ -88,7 +89,7 @@ ___
 
 • `Const` **maxIntegerDigits**: *number*
 
-Defined in: [src/runtime.ts:63](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L63)
+Defined in: [src/runtime.ts:76](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L76)
 
 ___
 
@@ -137,7 +138,31 @@ Defined in: [src/runtime.ts:28](https://github.com/wholebuzz/mapreduce/blob/mast
 
 **Returns:** *string*
 
-Defined in: [src/runtime.ts:65](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L65)
+Defined in: [src/runtime.ts:78](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L78)
+
+___
+
+### getConfigurationValue
+
+▸ **getConfigurationValue**<X\>(`configuration`: [*Configuration*](../interfaces/config.configuration.md) \| *undefined*, `key`: *string*, `type?`: *string*): X
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `X` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `configuration` | [*Configuration*](../interfaces/config.configuration.md) \| *undefined* |
+| `key` | *string* |
+| `type?` | *string* |
+
+**Returns:** X
+
+Defined in: [src/runtime.ts:52](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L52)
 
 ___
 
@@ -153,7 +178,7 @@ ___
 
 **Returns:** (`_`: *Record*<string, any\>) => *any*
 
-Defined in: [src/runtime.ts:56](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L56)
+Defined in: [src/runtime.ts:69](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L69)
 
 ___
 
@@ -169,7 +194,7 @@ ___
 
 **Returns:** (`_`: *Record*<string, any\>) => *any*
 
-Defined in: [src/runtime.ts:59](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L59)
+Defined in: [src/runtime.ts:72](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L72)
 
 ___
 
@@ -202,7 +227,7 @@ ___
 
 **Returns:** *undefined* \| (`index`: *number*) => *boolean*
 
-Defined in: [src/runtime.ts:52](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L52)
+Defined in: [src/runtime.ts:65](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L65)
 
 ___
 
@@ -259,7 +284,7 @@ ___
 | `valueProperty` | *string* |
 | `write` | () => *never* |
 
-Defined in: [src/runtime.ts:121](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L121)
+Defined in: [src/runtime.ts:134](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L134)
 
 ___
 
@@ -286,7 +311,7 @@ ___
 
 **Returns:** *Transform*
 
-Defined in: [src/runtime.ts:143](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L143)
+Defined in: [src/runtime.ts:156](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L156)
 
 ___
 
@@ -313,7 +338,7 @@ ___
 
 **Returns:** [*Item*](../interfaces/types.item.md)
 
-Defined in: [src/runtime.ts:131](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L131)
+Defined in: [src/runtime.ts:144](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L144)
 
 ___
 
@@ -354,7 +379,7 @@ ___
 
 **Returns:** *Promise*<[*MapReduceRuntimeConfig*](../interfaces/types.mapreduceruntimeconfig.md)<Key, Value\>\>
 
-Defined in: [src/runtime.ts:68](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L68)
+Defined in: [src/runtime.ts:81](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L81)
 
 ___
 
@@ -381,4 +406,4 @@ ___
 
 **Returns:** *Transform*
 
-Defined in: [src/runtime.ts:204](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L204)
+Defined in: [src/runtime.ts:217](https://github.com/wholebuzz/mapreduce/blob/master/src/runtime.ts#L217)

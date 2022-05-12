@@ -87,7 +87,7 @@ ___
 | `Key` |
 | `Value` |
 
-Defined in: [src/types.ts:55](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L55)
+Defined in: [src/types.ts:56](https://github.com/wholebuzz/mapreduce/blob/master/src/types.ts#L56)
 
 ___
 

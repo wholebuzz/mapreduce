@@ -7,7 +7,7 @@
 ### Functions
 
 - [getMapperImplementation](mapreduce.md#getmapperimplementation)
-- [getSplits](mapreduce.md#getsplits)
+- [getMatchingInputSplits](mapreduce.md#getmatchinginputsplits)
 - [mapReduce](mapreduce.md#mapreduce)
 - [runCleanupPhase](mapreduce.md#runcleanupphase)
 - [runMapPhaseWithExternalSorting](mapreduce.md#runmapphasewithexternalsorting)
@@ -28,24 +28,24 @@
 
 **Returns:** <Key, Value\>(`mapper`: [*Mapper*](../interfaces/types.mapper.md)<Key, Value\>, `combiner`: [*Reducer*](../interfaces/types.reducer.md)<Key, Value\> \| *undefined*, `args`: [*MapReduceRuntimeConfig*](../interfaces/types.mapreduceruntimeconfig.md)<Key, Value\>, `options`: DatabaseCopyOptions) => *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:204](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L204)
+Defined in: [src/mapreduce.ts:223](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L223)
 
 ___
 
-### getSplits
+### getMatchingInputSplits
 
-▸ **getSplits**(`fileSystem`: FileSystem, `inputPaths`: *string*[]): *Promise*<[*InputSplit*](../interfaces/config.inputsplit.md)[]\>
+▸ **getMatchingInputSplits**(`inputSplits`: [*InputSplit*](../interfaces/config.inputsplit.md)[], `outputShard`: Shard): [*InputSplit*](../interfaces/config.inputsplit.md)[]
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `fileSystem` | FileSystem |
-| `inputPaths` | *string*[] |
+| `inputSplits` | [*InputSplit*](../interfaces/config.inputsplit.md)[] |
+| `outputShard` | Shard |
 
-**Returns:** *Promise*<[*InputSplit*](../interfaces/config.inputsplit.md)[]\>
+**Returns:** [*InputSplit*](../interfaces/config.inputsplit.md)[]
 
-Defined in: [src/mapreduce.ts:349](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L349)
+Defined in: [src/mapreduce.ts:234](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L234)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:34](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L34)
+Defined in: [src/mapreduce.ts:28](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L28)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:281](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L281)
+Defined in: [src/mapreduce.ts:330](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L330)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:241](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L241)
+Defined in: [src/mapreduce.ts:290](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L290)
 
 ___
 
@@ -149,4 +149,4 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [src/mapreduce.ts:215](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L215)
+Defined in: [src/mapreduce.ts:263](https://github.com/wholebuzz/mapreduce/blob/master/src/mapreduce.ts#L263)
